@@ -23,34 +23,34 @@
     {
       "id": "w1",
       "name": "Δηλητήριο",
-      "image": null
+      "image": "/cases/img/case-01/w1.jpg"
     },
     {
       "id": "w2",
       "name": "Κηροπήγιο",
-      "image": null
+      "image": "/cases/img/case-01/w2.jpg"
     },
     {
       "id": "w3",
       "name": "Μαχαίρι",
-      "image": null
+      "image": "/cases/img/case-01/w3.jpg"
     }
   ],
   "motives": [
     {
       "id": "m1",
       "name": "Κληρονομιά",
-      "image": null
+      "image": "/cases/img/case-01/m1.jpg"
     },
     {
       "id": "m2",
       "name": "Εκδίκηση",
-      "image": null
+      "image": "/cases/img/case-01/m2.jpg"
     },
     {
       "id": "m3",
       "name": "Χρέη",
-      "image": null
+      "image": "/cases/img/case-01/m3.jpg"
     }
   ],
   "clues": [

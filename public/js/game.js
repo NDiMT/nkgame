@@ -10,6 +10,7 @@
 // authority that checks the final accusation.
 
 import { Peer } from '/js/rtc.js';
+import { Soundtrack } from '/js/audio.js';
 
 const $ = (sel) => document.querySelector(sel);
 const screens = {};
@@ -19,6 +20,7 @@ let myPlayer = null; // 1 | 2
 let caseData = null; // full case (host) or shared+own-clues (guest)
 let myGuess = { suspect: null, weapon: null, motive: null };
 const submits = {}; // host-side: { 1: guess, 2: guess }
+const music = new Soundtrack();
 
 // --- Screen helpers ---------------------------------------------------------
 function show(name) {
@@ -84,7 +86,12 @@ function renderGame() {
 function renderChoices(containerId, items, field) {
   const el = $(`#${containerId}`);
   el.innerHTML = items
-    .map((it) => `<button class="choice" data-field="${field}" data-id="${it.id}">${escapeHtml(it.name)}</button>`)
+    .map(
+      (it) => `<button class="choice ${it.image ? 'has-img' : ''}" data-field="${field}" data-id="${it.id}">
+        ${it.image ? `<img src="${it.image}" alt="" loading="lazy">` : ''}
+        <span>${escapeHtml(it.name)}</span>
+      </button>`
+    )
     .join('');
   el.querySelectorAll('.choice').forEach((btn) => {
     btn.onclick = () => {
@@ -180,10 +187,21 @@ function wireUI() {
   screens.game = $('#screen-game');
   screens.result = $('#screen-result');
 
-  $('#btn-create').onclick = startHost;
+  $('#btn-create').onclick = () => {
+    music.start(); // first user gesture — satisfies autoplay policy
+    startHost();
+  };
   $('#btn-join').onclick = () => {
     const code = $('#join-code').value.replace(/\D/g, '').slice(0, 6);
-    if (code.length === 6) startGuest(code);
+    if (code.length === 6) {
+      music.start();
+      startGuest(code);
+    }
+  };
+
+  $('#mute').onclick = () => {
+    const on = music.toggle();
+    $('#mute').textContent = on ? '🔊' : '🔇';
   };
 
   $('#chat-send').onclick = sendChat;

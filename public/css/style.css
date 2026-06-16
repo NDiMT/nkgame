@@ -88,6 +88,42 @@ input {
 .choices { display: flex; flex-wrap: wrap; gap: 8px; }
 .choice { background: #120e18; border: 1px solid #332a44; }
 .choice.selected { background: var(--accent-2); border-color: var(--accent-2); color: #fff; }
+/* image choices (suspects/weapons/motives) render as tappable art cards */
+.choice.has-img {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 8px;
+  width: 104px;
+}
+.choice.has-img img { width: 88px; height: 88px; object-fit: cover; border-radius: 8px; }
+.choice.has-img span { font-size: 0.8rem; text-align: center; line-height: 1.2; }
+.choice.has-img.selected { box-shadow: 0 0 0 2px var(--accent-2); }
+
+/* home cover art */
+.cover {
+  width: 100%;
+  aspect-ratio: 3/2;
+  object-fit: cover;
+  border-radius: 14px;
+  margin-bottom: 12px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+}
+
+/* mute toggle */
+#mute {
+  position: fixed;
+  top: calc(env(safe-area-inset-top) + 8px);
+  right: 12px;
+  z-index: 10;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--panel);
+  font-size: 1.1rem;
+  padding: 0;
+}
 
 .chat-log {
   background: var(--panel);
