@@ -20,6 +20,7 @@ let myPlayer = null; // 1 | 2
 let caseData = null; // full case (host) or shared+own-clues (guest)
 let myGuess = { suspect: null, weapon: null, motive: null };
 const submits = {}; // host-side: { 1: guess, 2: guess }
+const sharedItems = []; // evidence the partner has shared with me
 const music = new Soundtrack();
 
 // --- Screen helpers ---------------------------------------------------------
@@ -42,10 +43,23 @@ function escapeHtml(s) {
 }
 
 // --- Case loading -----------------------------------------------------------
+// The host picks a case on the home screen; default is the last in the manifest.
+let selectedCaseFile = '/cases/case-03.json';
+
+async function populateCasePicker() {
+  try {
+    const manifest = await (await fetch('/cases/manifest.json')).json();
+    const sel = $('#case-select');
+    sel.innerHTML = manifest.map((c) => `<option value="${c.file}">${escapeHtml(c.title)}</option>`).join('');
+    sel.value = selectedCaseFile = manifest[manifest.length - 1].file;
+    sel.onchange = () => (selectedCaseFile = sel.value);
+  } catch {
+    /* no manifest → fall back to default */
+  }
+}
+
 async function loadCase() {
-  // For the skeleton we ship one sample case. A picker / generator output
-  // would populate /cases with more.
-  const res = await fetch('/cases/case-01.json');
+  const res = await fetch(selectedCaseFile);
   return res.json();
 }
 
@@ -67,17 +81,33 @@ function renderGame() {
   $('#case-title').textContent = caseData.title;
   $('#case-intro').textContent = caseData.intro;
 
-  const myClues = caseData.clues.filter((c) => c.forPlayer === myPlayer);
-  $('#clues').innerHTML = myClues
+  // Suspect dossiers — shared background for both players (part of the plot).
+  $('#dossiers').innerHTML = caseData.suspects
     .map(
-      (c) => `
-      <div class="clue">
-        ${c.image ? `<img src="${c.image}" alt="" loading="lazy">` : ''}
-        <p>${escapeHtml(c.text)}</p>
+      (s) => `
+      <div class="dossier">
+        ${s.image ? `<img src="${s.image}" alt="" loading="lazy">` : ''}
+        <div><b>${escapeHtml(s.name)}</b><p>${escapeHtml(s.dossier || '')}</p></div>
       </div>`
     )
     .join('');
 
+  const myClues = caseData.clues.filter((c) => c.forPlayer === myPlayer);
+  $('#clues').innerHTML = myClues
+    .map(
+      (c) => `
+      <button class="clue" data-id="${c.id}">
+        <span class="tap">πάτα για εξέταση ›</span>
+        ${c.image ? `<img src="${c.image}" alt="" loading="lazy">` : ''}
+        <p>${escapeHtml(c.text)}</p>
+      </button>`
+    )
+    .join('');
+  $('#clues')
+    .querySelectorAll('.clue')
+    .forEach((btn) => (btn.onclick = () => openInspect(myClues.find((c) => c.id === btn.dataset.id))));
+
+  renderShared();
   renderChoices('suspects', caseData.suspects, 'suspect');
   renderChoices('weapons', caseData.weapons, 'weapon');
   renderChoices('motives', caseData.motives, 'motive');
@@ -119,6 +149,61 @@ function showPartnerGuess(guess) {
     `${nameOf(caseData.weapons, guess.weapon)} · ${nameOf(caseData.motives, guess.motive)}`;
 }
 
+// --- Evidence objects: inspect + share -------------------------------------
+function openInspect(clue) {
+  if (!clue) return;
+  closeInspect();
+  const el = document.createElement('div');
+  el.className = 'modal';
+  el.id = 'inspect';
+  el.innerHTML = `
+    <div class="modal-card">
+      ${clue.image ? `<img src="${clue.image}" alt="">` : ''}
+      <div class="body">
+        <p>${escapeHtml(clue.text)}</p>
+        <div class="row">
+          <button class="btn-ghost" id="ins-close">Κλείσιμο</button>
+          <button class="primary" id="ins-share">Μοίρασέ το στον συνεργάτη</button>
+        </div>
+      </div>
+    </div>`;
+  el.onclick = (e) => {
+    if (e.target === el) closeInspect();
+  };
+  document.body.appendChild(el);
+  $('#ins-close').onclick = closeInspect;
+  $('#ins-share').onclick = () => {
+    shareClue(clue);
+    closeInspect();
+  };
+}
+
+function closeInspect() {
+  document.getElementById('inspect')?.remove();
+}
+
+function shareClue(clue) {
+  peer.send({ t: 'share', clue: { id: clue.id, text: clue.text, image: clue.image } });
+  chatLine('Εσύ', '📎 Μοιράστηκα ένα στοιχείο με τον συνεργάτη.');
+}
+
+function addShared(clue) {
+  if (sharedItems.find((c) => c.id === clue.id)) return;
+  sharedItems.push(clue);
+  renderShared();
+  chatLine('Συνεργάτης', '📎 μοιράστηκε ένα στοιχείο μαζί σου.');
+}
+
+function renderShared() {
+  const el = $('#shared');
+  if (!el) return;
+  el.innerHTML = sharedItems
+    .map(
+      (c) => `<div class="shared-item">${c.image ? `<img src="${c.image}" alt="">` : ''}<p>${escapeHtml(c.text)}</p></div>`
+    )
+    .join('');
+}
+
 // --- Accusation / result ----------------------------------------------------
 function sameGuess(a, b) {
   return a && b && a.suspect === b.suspect && a.weapon === b.weapon && a.motive === b.motive;
@@ -131,20 +216,40 @@ function evaluate() {
   if (!g1 || !g2) return;
   const agree = sameGuess(g1, g2);
   const correct = agree && sameGuess(g1, caseData.solution);
-  const result = { t: 'result', agree, correct, solution: caseData.solution };
+  const result = {
+    t: 'result',
+    agree,
+    correct,
+    solution: caseData.solution,
+    epilogue: correct ? caseData.epilogue || '' : '', // only revealed on a win
+  };
   peer.send(result);
   renderResult(result);
 }
 
-function renderResult({ agree, correct, solution }) {
+// Return to the board for another attempt (no reload — keeps the P2P session).
+function resetRound() {
+  delete submits[1];
+  delete submits[2];
+  const btn = $('#accuse');
+  btn.textContent = 'Κατηγορώ';
+  updateAccuseButton();
+  show('game');
+}
+
+function renderResult({ agree, correct, solution, epilogue }) {
   let msg;
   if (!agree) msg = '🤔 Δεν συμφωνήσατε στην κατηγορία. Συνεννοηθείτε και ξαναδοκιμάστε!';
-  else if (correct) msg = '🎉 Λύσατε το μυστήριο! Σωστή κατηγορία.';
+  else if (correct) msg = '🎉 Λύσατε το μυστήριο!';
   else msg = '❌ Συμφωνήσατε, αλλά η κατηγορία ήταν λάθος. Η υπόθεση παραμένει ανοιχτή...';
   $('#result-msg').textContent = msg;
   $('#result-detail').textContent = correct
     ? `Ένοχος: ${nameOf(caseData.suspects, solution.suspect)} με ${nameOf(caseData.weapons, solution.weapon)} (${nameOf(caseData.motives, solution.motive)}).`
     : '';
+  $('#result-epilogue').textContent = correct ? epilogue || '' : '';
+  // Win → offer a fresh game; otherwise let them go back and keep investigating.
+  $('#btn-again').classList.toggle('hidden', !correct);
+  $('#result-retry').classList.toggle('hidden', correct);
   show('result');
 }
 
@@ -157,6 +262,9 @@ function onMessage(msg) {
       break;
     case 'chat':
       chatLine('Συνεργάτης', msg.text);
+      break;
+    case 'share':
+      addShared(msg.clue);
       break;
     case 'guess':
       showPartnerGuess(msg.guess);
@@ -223,6 +331,9 @@ function wireUI() {
   };
 
   $('#btn-again').onclick = () => location.reload();
+  $('#result-retry').onclick = resetRound;
+
+  populateCasePicker();
 }
 
 function sendChat() {

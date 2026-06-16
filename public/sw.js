@@ -1,7 +1,7 @@
 // Minimal service worker — enables "Add to Home Screen" (PWA) and offline
 // loading of the app shell. Network-first so updates always win; cache is a
 // fallback when offline. Bump CACHE on each release to invalidate.
-const CACHE = 'nkgame-v2';
+const CACHE = 'nkgame-v3';
 const SHELL = [
   '/',
   '/index.html',
@@ -10,6 +10,8 @@ const SHELL = [
   '/js/rtc.js',
   '/js/audio.js',
   '/assets/cover.jpg',
+  '/assets/bg.jpg',
+  '/assets/paper.jpg',
   '/manifest.webmanifest',
 ];
 
