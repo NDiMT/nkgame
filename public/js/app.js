@@ -1,7 +1,7 @@
 // Cardspire-style roguelike (Card Quest-inspired): attack/defense phases,
 // combos, dodge, equipment-granted cards. Run state + flow + rendering + input.
 
-import { CARDS, ENEMIES, CLASSES, EQUIPMENT_BY_CLASS, COMMON_ENEMIES } from './data.js';
+import { CARDS, ENEMIES, CLASSES, SPECS, EQUIPMENT_BY_CLASS, COMMON_ENEMIES } from './data.js';
 import { createCombat, playCard, canPlay, toDefense, resolveDefense, canMulligan, mulligan } from './engine.js';
 import { Soundtrack } from './audio.js';
 
@@ -19,7 +19,7 @@ const ROOM_NAME = { battle: 'Battle', elite: 'Elite', rest: 'Rest', treasure: 'T
 function show(name) { Object.values(screens).forEach((el) => el.classList.add('hidden')); screens[name].classList.remove('hidden'); }
 function img(key, cls) { return `<img class="${cls}" src="assets/img/${key}.jpg" alt="" loading="lazy" onerror="this.style.display='none'">`; }
 
-// --- Class selection --------------------------------------------------------
+// --- Class + specialization selection ---------------------------------------
 function classSelect() {
   $('#class-cards').innerHTML = Object.values(CLASSES).map((cl) => `
     <button class="classcard" data-id="${cl.id}">
@@ -27,14 +27,48 @@ function classSelect() {
       <span class="cname">${cl.name}</span>
       <span class="cdesc">${cl.desc}</span>
     </button>`).join('');
-  $('#class-cards').querySelectorAll('.classcard').forEach((b) => (b.onclick = () => newRun(b.dataset.id)));
+  $('#class-cards').querySelectorAll('.classcard').forEach((b) => (b.onclick = () => specSelect(b.dataset.id)));
   show('class');
 }
 
+function passiveText(p) {
+  const t = [];
+  if (p.hp) t.push(`+${p.hp} HP`);
+  if (p.stamina) t.push(`+${p.stamina} stamina`);
+  if (p.charge) t.push(`start +${p.charge} charge`);
+  return t.join(', ');
+}
+
+function specSelect(classId) {
+  const cls = CLASSES[classId];
+  $('#spec-title').textContent = `${cls.name} — choose a specialization`;
+  $('#spec-cards').innerHTML = SPECS[classId].map((sp) => `
+    <button class="classcard" data-id="${sp.id}">
+      ${img(sp.img, 'class-art')}
+      <span class="cname">${sp.name}</span>
+      <span class="cdesc">${sp.desc}</span>
+    </button>`).join('');
+  $('#spec-cards').querySelectorAll('.classcard').forEach((b) => (b.onclick = () => newRun(classId, b.dataset.id)));
+  show('spec');
+}
+
 // --- Run + map --------------------------------------------------------------
-function newRun(classId) {
+function newRun(classId, specId) {
   const cls = CLASSES[classId] || CLASSES.fighter;
-  run = { classId: cls.id, hp: 70, maxHp: 70, deck: [...cls.deck], map: genMap(), position: -1 };
+  const spec = (SPECS[classId] || []).find((s) => s.id === specId) || SPECS[classId][0];
+  const p = spec.passive || {};
+  run = {
+    classId: cls.id,
+    specId: spec.id,
+    maxHp: 70 + (p.hp || 0),
+    hp: 70 + (p.hp || 0),
+    maxStamina: cls.maxStamina + (p.stamina || 0),
+    maxArcane: cls.maxArcane,
+    startArcane: p.charge || 0,
+    deck: [...spec.deck],
+    map: genMap(),
+    position: -1,
+  };
   renderMap();
   show('map');
 }
@@ -222,7 +256,7 @@ function victory() {
 
 // --- Wiring -----------------------------------------------------------------
 function wire() {
-  for (const n of ['title', 'class', 'map', 'combat', 'reward', 'event', 'end']) screens[n] = $('#screen-' + n);
+  for (const n of ['title', 'class', 'spec', 'map', 'combat', 'reward', 'event', 'end']) screens[n] = $('#screen-' + n);
   $('#btn-start').onclick = () => { music.start(); classSelect(); };
   $('#event-continue').onclick = afterRoom;
   $('#btn-restart').onclick = () => classSelect();

@@ -14,9 +14,12 @@ const pickPlan = (e) => e.plans[Math.floor(Math.random() * e.plans.length)];
 export function createCombat(run, enemyId) {
   const def = ENEMIES[enemyId];
   const cls = CLASSES[run.classId] || CLASSES.fighter;
+  const maxStamina = run.maxStamina ?? cls.maxStamina;
+  const maxArcane = run.maxArcane ?? cls.maxArcane;
+  const startArcane = Math.min(maxArcane, run.startArcane ?? 0);
   const hp = rand(def.hp[0], def.hp[1]);
   const c = {
-    player: { hp: run.hp, maxHp: run.maxHp, stamina: cls.maxStamina, maxStamina: cls.maxStamina, arcane: 0, maxArcane: cls.maxArcane, block: 0, dodge: 0, counter: 0, hidden: 0 },
+    player: { hp: run.hp, maxHp: run.maxHp, stamina: maxStamina, maxStamina, arcane: startArcane, maxArcane, block: 0, dodge: 0, counter: 0, hidden: 0 },
     enemy: { id: enemyId, name: def.name, img: def.img, hp, maxHp: hp, dodge: def.dodge, maxDodge: def.dodge, poison: 0, plans: def.plans, plan: pickPlan(def) },
     phase: 'attack',
     chain: 0,

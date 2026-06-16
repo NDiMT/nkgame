@@ -110,6 +110,43 @@ export const CLASSES = {
   },
 };
 
+// Specializations: 3 per class. Each tweaks the starter deck + a passive.
+// passive: { hp, stamina, charge } bonuses applied at run start.
+export const SPECS = {
+  fighter: [
+    { id: 'berserker', name: 'Berserker', img: 'card_finisher', desc: 'All-out offense. +6 HP.',
+      passive: { hp: 6 }, deck: ['jab', 'jab', 'slash', 'slash', 'combo', 'combo', 'heavy', 'finisher', 'block', 'dodge'] },
+    { id: 'paladin', name: 'Paladin', img: 'card_block', desc: 'Defensive & sustaining. +10 HP.',
+      passive: { hp: 10 }, deck: ['slash', 'combo', 'jab', 'block', 'block', 'brace', 'brace', 'parry', 'focus', 'heavy'] },
+    { id: 'warlord', name: 'Warlord', img: 'card_cleave', desc: 'Tireless. +1 max stamina.',
+      passive: { stamina: 1 }, deck: ['jab', 'slash', 'combo', 'combo', 'heavy', 'finisher', 'focus', 'block', 'dodge', 'parry'] },
+  ],
+  wizard: [
+    { id: 'pyromancer', name: 'Pyromancer', img: 'card_fireball', desc: 'Burn it down. Start with 2 arcane.',
+      passive: { charge: 2 }, deck: ['spark', 'spark', 'fireball', 'fireball', 'arcanebolt', 'lightning', 'insight', 'magicshield', 'blink', 'blink'] },
+    { id: 'stormcaller', name: 'Stormcaller', img: 'card_lightning', desc: 'Endless chains. +1 max stamina.',
+      passive: { stamina: 1 }, deck: ['lightning', 'lightning', 'lightning', 'spark', 'spark', 'arcanebolt', 'insight', 'magicshield', 'blink', 'blink'] },
+    { id: 'archmage', name: 'Archmage', img: 'card_arcanebolt', desc: 'Raw power. Start with 3 arcane.',
+      passive: { charge: 3 }, deck: ['spark', 'lightning', 'arcanebolt', 'arcanebolt', 'fireball', 'insight', 'insight', 'magicshield', 'blink', 'blink'] },
+  ],
+  rogue: [
+    { id: 'assassin', name: 'Assassin', img: 'card_backstab', desc: 'Strike from stealth. +5 HP.',
+      passive: { hp: 5 }, deck: ['backstab', 'backstab', 'vanish', 'vanish', 'throwknife', 'shadowstep', 'eviscerate', 'smokebomb', 'trickdodge', 'throwknife'] },
+    { id: 'venomancer', name: 'Venomancer', img: 'card_poisonblade', desc: 'Death by poison. +6 HP.',
+      passive: { hp: 6 }, deck: ['poisonblade', 'poisonblade', 'poisonblade', 'eviscerate', 'eviscerate', 'throwknife', 'shadowstep', 'vanish', 'smokebomb', 'trickdodge'] },
+    { id: 'swashbuckler', name: 'Swashbuckler', img: 'card_shadowstep', desc: 'Dodge & counter. +1 max stamina.',
+      passive: { stamina: 1 }, deck: ['shadowstep', 'shadowstep', 'trickdodge', 'trickdodge', 'throwknife', 'throwknife', 'backstab', 'vanish', 'smokebomb', 'poisonblade'] },
+  ],
+  hunter: [
+    { id: 'sharpshooter', name: 'Sharpshooter', img: 'card_aimedshot', desc: 'Precision shots. Start with 2 aim.',
+      passive: { charge: 2 }, deck: ['shoot', 'shoot', 'aimedshot', 'aimedshot', 'takeaim', 'multishot', 'volley', 'trap', 'dodgeroll', 'volley'] },
+    { id: 'trapper', name: 'Trapper', img: 'card_trap', desc: 'Control & survive. +6 HP.',
+      passive: { hp: 6 }, deck: ['volley', 'volley', 'trap', 'trap', 'shoot', 'takeaim', 'multishot', 'dodgeroll', 'dodgeroll', 'shoot'] },
+    { id: 'feyarcher', name: 'Fey Archer', img: 'card_volley', desc: 'Relentless volleys. +1 max stamina.',
+      passive: { stamina: 1 }, deck: ['volley', 'volley', 'volley', 'shoot', 'shoot', 'takeaim', 'takeaim', 'aimedshot', 'dodgeroll', 'trap'] },
+  ],
+};
+
 export const EQUIPMENT_BY_CLASS = {
   fighter: [
     { id: 'greatsword', name: 'Greatsword', desc: 'Adds Finisher + Heavy Smash.', cards: ['finisher', 'heavy'], img: 'card_finisher' },
