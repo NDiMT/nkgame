@@ -4,7 +4,7 @@
 //  Defense phase — answer the enemy's telegraphed hits with Block/Dodge/Parry,
 //  then stamina recharges. 5-card hand, Mulligan on the opening hand.
 
-import { CARDS, ENEMIES } from './data.js';
+import { CARDS, ENEMIES, CLASSES } from './data.js';
 
 const HAND_LIMIT = 5;
 const rand = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
@@ -13,9 +13,10 @@ const pickPlan = (e) => e.plans[Math.floor(Math.random() * e.plans.length)];
 
 export function createCombat(run, enemyId) {
   const def = ENEMIES[enemyId];
+  const cls = CLASSES[run.classId] || CLASSES.fighter;
   const hp = rand(def.hp[0], def.hp[1]);
   const c = {
-    player: { hp: run.hp, maxHp: run.maxHp, stamina: 3, maxStamina: 3, block: 0, dodge: 0, counter: 0 },
+    player: { hp: run.hp, maxHp: run.maxHp, stamina: cls.maxStamina, maxStamina: cls.maxStamina, arcane: 0, maxArcane: cls.maxArcane, block: 0, dodge: 0, counter: 0 },
     enemy: { id: enemyId, name: def.name, img: def.img, hp, maxHp: hp, dodge: def.dodge, maxDodge: def.dodge, plans: def.plans, plan: pickPlan(def) },
     phase: 'attack',
     chain: 0,
@@ -76,6 +77,7 @@ function applyEffects(c, list) {
       case 'counter': p.counter += e.value; break;
       case 'draw': draw(c, e.value); break;
       case 'stamina': p.stamina += e.value; break;
+      case 'arcane': p.arcane = Math.min(p.maxArcane, p.arcane + e.value); break;
       case 'heal': p.hp = Math.min(p.maxHp, p.hp + e.value); break;
     }
   }
@@ -84,7 +86,12 @@ function applyEffects(c, list) {
 export function canPlay(c, i) {
   const card = CARDS[c.hand[i]];
   if (!card || c.over) return false;
-  if (c.phase === 'attack') return (card.use === 'attack' || card.use === 'utility') && card.cost <= c.player.stamina;
+  if (c.phase === 'attack') {
+    if (card.use !== 'attack' && card.use !== 'utility') return false;
+    if (card.cost > c.player.stamina) return false;
+    if (card.arcaneCost && card.arcaneCost > c.player.arcane) return false;
+    return true;
+  }
   return card.use === 'defense';
 }
 
@@ -99,6 +106,7 @@ export function playCard(c, i) {
     applyEffects(c, card.effects); // chainDamage reads the chain built so far
     if (inChain && card.chain) applyEffects(c, card.chain);
     if (card.cost) c.player.stamina -= card.cost;
+    if (card.arcaneCost) c.player.arcane -= card.arcaneCost;
     c.chain = card.chainbreaker ? 0 : c.chain + 1;
   } else {
     applyEffects(c, card.effects);

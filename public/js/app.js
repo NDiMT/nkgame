@@ -1,7 +1,7 @@
 // Cardspire-style roguelike (Card Quest-inspired): attack/defense phases,
 // combos, dodge, equipment-granted cards. Run state + flow + rendering + input.
 
-import { CARDS, ENEMIES, STARTER_DECK, EQUIPMENT, COMMON_ENEMIES } from './data.js';
+import { CARDS, ENEMIES, CLASSES, EQUIPMENT_BY_CLASS, COMMON_ENEMIES } from './data.js';
 import { createCombat, playCard, canPlay, toDefense, resolveDefense, canMulligan, mulligan } from './engine.js';
 import { Soundtrack } from './audio.js';
 
@@ -19,9 +19,22 @@ const ROOM_NAME = { battle: 'Battle', elite: 'Elite', rest: 'Rest', treasure: 'T
 function show(name) { Object.values(screens).forEach((el) => el.classList.add('hidden')); screens[name].classList.remove('hidden'); }
 function img(key, cls) { return `<img class="${cls}" src="assets/img/${key}.jpg" alt="" loading="lazy" onerror="this.style.display='none'">`; }
 
+// --- Class selection --------------------------------------------------------
+function classSelect() {
+  $('#class-cards').innerHTML = Object.values(CLASSES).map((cl) => `
+    <button class="classcard" data-id="${cl.id}">
+      ${img(cl.img, 'class-art')}
+      <span class="cname">${cl.name}</span>
+      <span class="cdesc">${cl.desc}</span>
+    </button>`).join('');
+  $('#class-cards').querySelectorAll('.classcard').forEach((b) => (b.onclick = () => newRun(b.dataset.id)));
+  show('class');
+}
+
 // --- Run + map --------------------------------------------------------------
-function newRun() {
-  run = { hp: 70, maxHp: 70, deck: [...STARTER_DECK], map: genMap(), position: -1 };
+function newRun(classId) {
+  const cls = CLASSES[classId] || CLASSES.fighter;
+  run = { classId: cls.id, hp: 70, maxHp: 70, deck: [...cls.deck], map: genMap(), position: -1 };
   renderMap();
   show('map');
 }
@@ -95,6 +108,7 @@ function renderCombat() {
     <div class="pstat">❤️ ${bar(p.hp, p.maxHp)}</div>
     <div class="pbadges">
       <span class="energy">⚡ ${p.stamina}/${p.maxStamina}</span>
+      ${p.maxArcane > 0 ? `<span class="badge arc">🔮 ${p.arcane}/${p.maxArcane}</span>` : ''}
       ${c.chain > 0 ? `<span class="badge cmb">🔗 chain ${c.chain}</span>` : ''}
       ${p.block > 0 ? `<span class="badge blk">🛡 ${p.block}</span>` : ''}
       ${p.dodge > 0 ? `<span class="badge dge">💨 ${p.dodge}</span>` : ''}
@@ -151,10 +165,11 @@ function equipCard(eq) {
 }
 
 function offerEquipment(container, onPick) {
-  const choices = sample(EQUIPMENT, 3);
+  const pool = EQUIPMENT_BY_CLASS[run.classId] || EQUIPMENT_BY_CLASS.fighter;
+  const choices = sample(pool, 3);
   container.innerHTML = choices.map(equipCard).join('');
   container.querySelectorAll('.card').forEach((b) => (b.onclick = () => {
-    const eq = EQUIPMENT.find((x) => x.id === b.dataset.id);
+    const eq = pool.find((x) => x.id === b.dataset.id);
     run.deck.push(...eq.cards);
     onPick();
   }));
@@ -204,10 +219,10 @@ function victory() {
 
 // --- Wiring -----------------------------------------------------------------
 function wire() {
-  for (const n of ['title', 'map', 'combat', 'reward', 'event', 'end']) screens[n] = $('#screen-' + n);
-  $('#btn-start').onclick = () => { music.start(); newRun(); };
+  for (const n of ['title', 'class', 'map', 'combat', 'reward', 'event', 'end']) screens[n] = $('#screen-' + n);
+  $('#btn-start').onclick = () => { music.start(); classSelect(); };
   $('#event-continue').onclick = afterRoom;
-  $('#btn-restart').onclick = () => newRun();
+  $('#btn-restart').onclick = () => classSelect();
   $('#mute').onclick = () => { $('#mute').textContent = music.toggle() ? '🔊' : '🔇'; };
 }
 wire();

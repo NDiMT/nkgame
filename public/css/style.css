@@ -157,8 +157,17 @@ h2 { font-family: 'Press Start 2P', monospace; font-size: 1rem; line-height: 1.5
 .enemy-area .enemy-art { width: 128px; height: 128px; }
 .intent { font-family: 'Press Start 2P', monospace; font-size: 0.7rem; color: #ff9b93; background: #2a1010; padding: 6px 8px; border-radius: 6px; min-height: 16px; }
 
-.badge.dge { background: #1c4a52; } .badge.cmb { background: #5a4a12; } .badge.ctr { background: #5e2535; }
+.badge.dge { background: #1c4a52; } .badge.cmb { background: #5a4a12; } .badge.ctr { background: #5e2535; } .badge.arc { background: #3a2a6a; }
 .card.utility { border-top-color: #c9a227; }
+
+/* class select */
+#screen-class { justify-content: center; align-items: center; text-align: center; }
+.class-cards { display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; margin-top: 16px; }
+.classcard { width: 160px; background: var(--panel); border: 2px solid #000; border-top: 4px solid var(--gold); border-radius: 10px; padding: 12px; color: var(--ink); cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.classcard:active { transform: scale(0.97); }
+.class-art { width: 120px; height: 120px; object-fit: contain; }
+.classcard .cname { font-family: 'Press Start 2P', monospace; font-size: 0.7rem; color: var(--gold); }
+.classcard .cdesc { font-size: 0.78rem; color: var(--muted); line-height: 1.4; }
 .secondary { font-family: 'Press Start 2P', monospace; font-size: 0.5rem; line-height: 1.4; border: 0; background: var(--panel-2); color: var(--ink); padding: 8px 10px; border-radius: 6px; cursor: pointer; }
 .secondary:active { transform: translateY(2px); }
 .cost.def { width: auto; padding: 0 6px; border-radius: 8px; font-size: 0.5rem; }

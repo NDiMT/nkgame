@@ -39,6 +39,20 @@ const CARD_PROMPTS = {
   dodge: 'an agile rogue leaping aside dodging, motion blur',
   parry: 'two swords clashing in a sparking parry',
   brace: 'a kneeling knight bracing behind a tower shield',
+  // wizard
+  spark: 'a crackling blue electric spark in an open hand',
+  lightning: 'a forked white-blue lightning bolt striking down',
+  arcanebolt: 'a glowing purple arcane energy orb crackling with runes',
+  fireball: 'a blazing orange fireball hurled forward with flames',
+  insight: 'an open glowing spellbook with floating arcane runes',
+  magicshield: 'a glowing blue hexagonal magical barrier shield',
+  blink: 'a wizard teleporting in a flash with a sparkling afterimage',
+};
+
+// Class portraits for the select screen.
+const CLASS_PROMPTS = {
+  class_fighter: 'a stalwart armored knight fighter holding sword and shield, heroic character portrait',
+  class_wizard: 'a robed wizard holding a glowing magic staff, arcane runes swirling, character portrait',
 };
 
 const ENEMY_PROMPTS = {
@@ -83,6 +97,7 @@ async function main() {
   let total = 0;
   const jobs = [
     ['cover', 'A hooded knight descending stone stairs into a torchlit dungeon, treasure chest and a looming dragon shadow, epic title splash', 256, 256],
+    ...Object.entries(CLASS_PROMPTS).map(([key, p]) => [key, p, 160, 160]),
     ...Object.values(CARDS).map((c) => [c.img, CARD_PROMPTS[c.id], 160, 120]),
     ...Object.values(ENEMIES).map((e) => [e.img, ENEMY_PROMPTS[e.id], 160, 160]),
   ];

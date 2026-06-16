@@ -1,6 +1,6 @@
 // Service worker — PWA install + offline. Network-first (updates win), cache
 // fallback. Relative URLs so it works under a GitHub Pages subpath.
-const CACHE = 'dungeoncards-v3';
+const CACHE = 'dungeoncards-v4';
 const SHELL = ['./', 'index.html', 'css/style.css', 'js/app.js', 'js/engine.js', 'js/data.js', 'js/audio.js', 'manifest.webmanifest'];
 
 self.addEventListener('install', (e) => {
