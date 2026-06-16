@@ -158,6 +158,9 @@ h2 { font-family: 'Press Start 2P', monospace; font-size: 1rem; line-height: 1.5
 .intent { font-family: 'Press Start 2P', monospace; font-size: 0.7rem; color: #ff9b93; background: #2a1010; padding: 6px 8px; border-radius: 6px; min-height: 16px; }
 
 .badge.dge { background: #1c4a52; } .badge.cmb { background: #5a4a12; } .badge.ctr { background: #5e2535; }
+.card.utility { border-top-color: #c9a227; }
+.secondary { font-family: 'Press Start 2P', monospace; font-size: 0.5rem; line-height: 1.4; border: 0; background: var(--panel-2); color: var(--ink); padding: 8px 10px; border-radius: 6px; cursor: pointer; }
+.secondary:active { transform: translateY(2px); }
 .cost.def { width: auto; padding: 0 6px; border-radius: 8px; font-size: 0.5rem; }
 .card.unplayable { opacity: 0.4; }
 

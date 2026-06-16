@@ -2,7 +2,7 @@
 // combos, dodge, equipment-granted cards. Run state + flow + rendering + input.
 
 import { CARDS, ENEMIES, STARTER_DECK, EQUIPMENT, COMMON_ENEMIES } from './data.js';
-import { createCombat, playCard, canPlay, toDefense, resolveDefense } from './engine.js';
+import { createCombat, playCard, canPlay, toDefense, resolveDefense, canMulligan, mulligan } from './engine.js';
 import { Soundtrack } from './audio.js';
 
 const $ = (s) => document.querySelector(s);
@@ -95,16 +95,19 @@ function renderCombat() {
     <div class="pstat">❤️ ${bar(p.hp, p.maxHp)}</div>
     <div class="pbadges">
       <span class="energy">⚡ ${p.stamina}/${p.maxStamina}</span>
-      ${p.combo > 0 ? `<span class="badge cmb">🔗 ${p.combo}</span>` : ''}
+      ${c.chain > 0 ? `<span class="badge cmb">🔗 chain ${c.chain}</span>` : ''}
       ${p.block > 0 ? `<span class="badge blk">🛡 ${p.block}</span>` : ''}
       ${p.dodge > 0 ? `<span class="badge dge">💨 ${p.dodge}</span>` : ''}
       ${p.counter > 0 ? `<span class="badge ctr">⚡counter ${p.counter}</span>` : ''}
     </div>`;
 
-  // Phase button
+  // Phase button + mulligan
   const btn = $('#phase-btn');
   btn.textContent = defense ? 'Resolve ▶' : 'Defend ▶';
   btn.onclick = defense ? doResolve : doDefend;
+  const mul = $('#mulligan');
+  if (canMulligan(c)) { mul.classList.remove('hidden'); mul.onclick = doMulligan; }
+  else mul.classList.add('hidden');
 
   // Hand
   $('#hand').innerHTML = c.hand.map((id, i) => {
@@ -130,6 +133,7 @@ function onCard(i) {
 }
 function doDefend() { toDefense(combat); renderCombat(); }
 function doResolve() { resolveDefense(combat); renderCombat(); }
+function doMulligan() { mulligan(combat); renderCombat(); }
 
 function endCombat() {
   if (!combat.won) return gameOver();
