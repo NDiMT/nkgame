@@ -29,10 +29,40 @@ export class Peer {
 
   _bindConn(conn) {
     this.conn = conn;
-    conn.on('open', () => this.cb.onOpen?.());
+    conn.on('open', () => {
+      this._clearTimeout();
+      this.cb.onOpen?.();
+    });
     conn.on('data', (data) => this.cb.onMessage?.(data));
     conn.on('close', () => this.cb.onClose?.('peer_left'));
     conn.on('error', () => this.cb.onClose?.('conn_error'));
+
+    // Surface a stuck NAT-traversal as a clear failure instead of hanging.
+    const pc = conn.peerConnection;
+    if (pc) {
+      pc.oniceconnectionstatechange = () => {
+        if (pc.iceConnectionState === 'failed') {
+          this._clearTimeout();
+          this.cb.onClose?.('ice_failed');
+        }
+      };
+    }
+  }
+
+  // If the data channel never opens, the connection silently hangs — give up
+  // after a while with a clear reason so the UI can tell the user.
+  _armTimeout() {
+    this._clearTimeout();
+    this._timer = setTimeout(() => {
+      if (!this.conn || !this.conn.open) this.cb.onClose?.('timeout');
+    }, 30000);
+  }
+
+  _clearTimeout() {
+    if (this._timer) {
+      clearTimeout(this._timer);
+      this._timer = null;
+    }
   }
 
   // --- Public API -----------------------------------------------------------
@@ -50,6 +80,7 @@ export class Peer {
     pjs.on('open', () => this.cb.onCode?.(code));
     pjs.on('connection', (conn) => {
       this.cb.onConnecting?.();
+      this._armTimeout();
       this._bindConn(conn);
     });
     pjs.on('error', (err) => {
@@ -70,6 +101,7 @@ export class Peer {
 
     pjs.on('open', () => {
       this.cb.onConnecting?.();
+      this._armTimeout();
       const conn = pjs.connect(PREFIX + code, { reliable: true });
       this._bindConn(conn);
     });

@@ -369,12 +369,24 @@ function makePeer() {
     onMessage,
     onClose: (reason) => {
       if (!screens.result.classList.contains('hidden')) return;
-      $('#lobby-status').textContent = `Η σύνδεση χάθηκε (${reason}). Κάνε ανανέωση.`;
+      const map = {
+        timeout: 'Δεν έγινε σύνδεση (μπορεί τα δίκτυα να μπλοκάρουν το P2P). Δοκιμάστε ξανά, ιδανικά με σταθερό WiFi.',
+        ice_failed: 'Απέτυχε η σύνδεση μεταξύ των δικτύων σας. Δοκιμάστε ξανά ή σε άλλο δίκτυο.',
+        peer_left: 'Ο συνεργάτης σου αποσυνδέθηκε.',
+        conn_error: 'Σφάλμα σύνδεσης. Δοκιμάστε ξανά.',
+      };
+      $('#lobby-status').textContent = (map[reason] || `Η σύνδεση χάθηκε (${reason}).`) + ' Κάνε ανανέωση για νέα προσπάθεια.';
       show('lobby');
     },
     onError: (reason) => {
-      const map = { no_such_room: 'Δεν υπάρχει παιχνίδι με αυτόν τον κωδικό.', room_full: 'Το παιχνίδι είναι γεμάτο.' };
-      $('#join-error').textContent = map[reason] || reason;
+      const map = {
+        no_such_room: 'Δεν υπάρχει ενεργό παιχνίδι με αυτόν τον κωδικό. Σιγουρέψου ότι ο δημιουργός τον έχει ανοιχτό.',
+        room_full: 'Το παιχνίδι είναι γεμάτο.',
+        network: 'Πρόβλημα δικτύου με τον broker. Δοκίμασε ξανά.',
+        'server-error': 'Ο broker δεν αποκρίνεται. Δοκίμασε ξανά σε λίγο.',
+      };
+      $('#join-error').textContent = map[reason] || `Σφάλμα: ${reason}`;
+      $('#lobby-status').textContent = map[reason] || `Σφάλμα: ${reason}`;
     },
   });
 }
