@@ -1,5 +1,5 @@
 [
-  { "file": "/cases/case-02.json", "title": "Φόνος στο Ιπτάμενο Τσίρκο της Σελήνης" },
-  { "file": "/cases/case-01.json", "title": "Φόνος στην Έπαυλη Καλντέρα" },
-  { "file": "/cases/case-03.json", "title": "Η Τελευταία Έκδοση" }
+  { "file": "cases/case-02.json", "title": "Φόνος στο Ιπτάμενο Τσίρκο της Σελήνης" },
+  { "file": "cases/case-01.json", "title": "Φόνος στην Έπαυλη Καλντέρα" },
+  { "file": "cases/case-03.json", "title": "Η Τελευταία Έκδοση" }
 ]

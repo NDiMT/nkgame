@@ -1,46 +1,56 @@
 # 🕵️ Νυχτερινός Φάκελος — Coop Detective Mystery
 
 A cooperative detective mystery for **2 players on mobile**. Each detective sees
-only half the clues; they talk over an in-game chat and jointly accuse a suspect.
-Connection is **peer-to-peer over WebRTC**, paired with a **6-digit code**.
+only half the clues; they talk over an in-game chat, share evidence objects, and
+jointly accuse a suspect. Connection is **peer-to-peer over WebRTC**, paired with
+a **6-digit code**.
 
-Built as a **PWA** (no app store) + a tiny **Node signaling server**. The mystery
-content (story, clues, art) is produced by AI: **Claude** writes the case,
-**Gemini** draws it.
+Built as a **fully static PWA** (no app store, no backend) — signaling runs over
+the **PeerJS public broker**, so it can be hosted as-is on **GitHub Pages**. The
+mystery content (story, clues, art) is produced by AI: **Claude** writes the
+case, **Gemini** draws it.
 
 ## Architecture
 
 ```
-public/                PWA (mobile-first, installable)
+public/                Fully static PWA (mobile-first, installable)
   index.html           screens: home / lobby / game / result
-  css/style.css        noir mobile UI
-  js/rtc.js            WebRTC peer + signaling client
+  css/style.css        atmospheric noir UI
+  js/rtc.js            PeerJS connection (6-digit code = room)
+  js/config.js         WebRTC ICE config (STUN; add TURN here)
+  js/audio.js          procedural noir soundtrack (Web Audio)
   js/game.js           coop detective game logic
-  cases/case-01.json   sample pre-generated mystery
-server/signaling.js    static file server + WebSocket signaling (6-digit rooms)
+  cases/*.json         pre-generated mysteries + manifest
+  assets/              cover, background + paper textures
+server/signaling.js    static file server for local dev (optional)
 tools/generate-case.js Claude (case JSON) + image provider (art) generator
-tools/providers/       image-provider.js (interface + placeholder), image-gemini.js
+.github/workflows/pages.yml   deploys public/ to GitHub Pages
 ```
 
 **How a game connects**
-1. Player A taps *Δημιουργία* → server returns a 6-digit code (the room id).
-2. Player B enters the code → server pairs them and relays WebRTC SDP/ICE.
-3. An `RTCDataChannel` opens; gameplay flows **P2P**, server steps out.
+1. Player A taps *Δημιουργία* → PeerJS registers a peer id from a 6-digit code.
+2. Player B enters the code → PeerJS connects to that peer via the public broker.
+3. A P2P `DataConnection` opens; gameplay flows directly between the two phones.
 
 STUN (Google's public servers) is used by default. For reliable connections on
-mobile carrier networks (symmetric NAT), configure a **TURN** server in `.env`.
+mobile carrier networks (symmetric NAT), add a **TURN** server in `js/config.js`.
 
 ## Run locally
 
 ```bash
-npm install
-cp .env.example .env        # optional: TURN + API keys
 npm start                   # http://localhost:8080
 ```
 
-Open the URL on two devices/tabs. On a phone, "Add to Home Screen" to install
-the PWA. (For real cross-device testing over the internet you need HTTPS — host
-the server on Render/Fly.io/a VPS behind TLS.)
+Or any static server (`npx serve public`). Open on two devices/tabs; on a phone,
+"Add to Home Screen" to install the PWA.
+
+## Deploy to GitHub Pages
+
+The included workflow (`.github/workflows/pages.yml`) publishes `public/` on every
+push. In **Settings → Pages**, set the source to **GitHub Actions** (the workflow
+also attempts to auto-enable it). The site serves under
+`https://<owner>.github.io/<repo>/` — all paths are relative so the subpath works.
+Because it's fully static + PeerJS, no server is required.
 
 ## Generate a new AI mystery
 

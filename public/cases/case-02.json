@@ -6,51 +6,51 @@
     {
       "id": "s1",
       "name": "Μαντάμ Ζορά, η μάντισσα",
-      "image": "/cases/img/case-02/s1.jpg"
+      "image": "cases/img/case-02/s1.jpg"
     },
     {
       "id": "s2",
       "name": "Ίγκορ, ο άνθρωπος-κανόνι",
-      "image": "/cases/img/case-02/s2.jpg"
+      "image": "cases/img/case-02/s2.jpg"
     },
     {
       "id": "s3",
       "name": "Κουκλίτσα, η κούκλα",
-      "image": "/cases/img/case-02/s3.jpg"
+      "image": "cases/img/case-02/s3.jpg"
     }
   ],
   "weapons": [
     {
       "id": "w1",
       "name": "Δηλητηριασμένος σκορπιός",
-      "image": "/cases/img/case-02/w1.jpg"
+      "image": "cases/img/case-02/w1.jpg"
     },
     {
       "id": "w2",
       "name": "Πειραγμένη γκιλοτίνα",
-      "image": "/cases/img/case-02/w2.jpg"
+      "image": "cases/img/case-02/w2.jpg"
     },
     {
       "id": "w3",
       "name": "Καταραμένο μουσικό κουτί",
-      "image": "/cases/img/case-02/w3.jpg"
+      "image": "cases/img/case-02/w3.jpg"
     }
   ],
   "motives": [
     {
       "id": "m1",
       "name": "Κλεμμένη προφητεία",
-      "image": "/cases/img/case-02/m1.jpg"
+      "image": "cases/img/case-02/m1.jpg"
     },
     {
       "id": "m2",
       "name": "Ζήλια για το προσκήνιο",
-      "image": "/cases/img/case-02/m2.jpg"
+      "image": "cases/img/case-02/m2.jpg"
     },
     {
       "id": "m3",
       "name": "Κρυμμένος δίδυμος",
-      "image": "/cases/img/case-02/m3.jpg"
+      "image": "cases/img/case-02/m3.jpg"
     }
   ],
   "clues": [
@@ -58,37 +58,37 @@
       "id": "c1",
       "forPlayer": 1,
       "text": "Μέσα στο γάντι του θύματος βρέθηκε ένα μικροσκοπικό κεντρί — κάτι τον τσίμπησε από μέσα, εκεί που κανείς δεν κοιτούσε.",
-      "image": "/cases/img/case-02/c1.jpg"
+      "image": "cases/img/case-02/c1.jpg"
     },
     {
       "id": "c2",
       "forPlayer": 1,
       "text": "Η Μαντάμ Ζορά έκανε όλη την παράσταση μπροστά σε 200 θεατές — δεν έφυγε ούτε λεπτό από την πίστα.",
-      "image": "/cases/img/case-02/c2.jpg"
+      "image": "cases/img/case-02/c2.jpg"
     },
     {
       "id": "c3",
       "forPlayer": 1,
       "text": "Ο νεκρός κρατούσε σφιχτά ένα σκισμένο πιστοποιητικό γέννησης — με δύο ονόματα πάνω του.",
-      "image": "/cases/img/case-02/c3.jpg"
+      "image": "cases/img/case-02/c3.jpg"
     },
     {
       "id": "c4",
       "forPlayer": 2,
       "text": "Ο Ίγκορ ήταν κλειδωμένος στο καμαρίνι με στραμπουληγμένο πόδι — αδύνατο να κινηθεί τη μοιραία ώρα.",
-      "image": "/cases/img/case-02/c4.jpg"
+      "image": "cases/img/case-02/c4.jpg"
     },
     {
       "id": "c5",
       "forPlayer": 2,
       "text": "Μόνο η «Κουκλίτσα» ήταν αρκετά μικρή για να χωρέσει στο κιβώτιο δίπλα στο θύμα — κι αυτό άνοιξε από μέσα.",
-      "image": "/cases/img/case-02/c5.jpg"
+      "image": "cases/img/case-02/c5.jpg"
     },
     {
       "id": "c6",
       "forPlayer": 2,
       "text": "Ο εγγαστρίμυθος ομολόγησε: η «κούκλα» είναι ο χαμένος δίδυμος του θύματος — που ήρθε για την κληρονομιά της προφητείας.",
-      "image": "/cases/img/case-02/c6.jpg"
+      "image": "cases/img/case-02/c6.jpg"
     }
   ],
   "solution": {

@@ -1,143 +1,86 @@
-// WebRTC peer connection + signaling client.
+// Peer connection via PeerJS (public broker) — fully static, no signaling
+// server of our own. Works on GitHub Pages.
 //
-// Flow:
-//   Host:  connect() -> send {create} -> receive {created, code}
-//          -> on {peer-joined} create datachannel + offer
-//   Guest: connect() -> send {join, code} -> receive {joined}
-//          -> on host's offer, answer
+// The 6-digit code becomes the host's peer id (namespaced to avoid collisions
+// on the shared public broker). The guest connects to that id; data then flows
+// P2P over a PeerJS DataConnection.
 //
-// Once the RTCDataChannel opens, callbacks.onOpen() fires and game messages
-// flow P2P via send(). The signaling socket stays open only for ICE trickle.
+// This class keeps the same surface the game expects:
+//   callbacks: onCode, onConnecting, onOpen, onMessage, onClose, onError
+//   methods:   host(), join(code), send(obj)
+// PeerJS is loaded globally from a CDN (window.Peer); we expose our own `Peer`.
 
-import { RTC_CONFIG } from '/config.js';
+import { RTC_CONFIG } from './config.js';
+
+const PREFIX = 'nkgame-'; // namespace on the shared public broker
 
 export class Peer {
   constructor(callbacks = {}) {
-    this.cb = callbacks; // { onCode, onConnecting, onOpen, onMessage, onClose, onError }
-    this.ws = null;
-    this.pc = null;
-    this.channel = null;
+    this.cb = callbacks;
+    this.pjs = null; // PeerJS instance
+    this.conn = null; // DataConnection
     this.role = null;
   }
 
-  _wsUrl() {
-    const proto = location.protocol === 'https:' ? 'wss' : 'ws';
-    return `${proto}://${location.host}`;
+  _newPeer(id) {
+    // id === undefined → broker assigns a random id (guest).
+    return new window.Peer(id, { config: RTC_CONFIG });
   }
 
-  _connectSignaling() {
-    return new Promise((resolve, reject) => {
-      this.ws = new WebSocket(this._wsUrl());
-      this.ws.onopen = () => resolve();
-      this.ws.onerror = () => reject(new Error('signaling_failed'));
-      this.ws.onmessage = (e) => this._onSignal(JSON.parse(e.data));
-      this.ws.onclose = () => this.cb.onClose?.('signaling_closed');
-    });
-  }
-
-  _setupPeerConnection() {
-    this.pc = new RTCPeerConnection(RTC_CONFIG);
-
-    this.pc.onicecandidate = (e) => {
-      if (e.candidate) this._send({ type: 'signal', data: { candidate: e.candidate } });
-    };
-
-    this.pc.onconnectionstatechange = () => {
-      const s = this.pc.connectionState;
-      if (s === 'failed' || s === 'disconnected') this.cb.onClose?.(s);
-    };
-
-    // Guest receives the channel the host created.
-    this.pc.ondatachannel = (e) => this._bindChannel(e.channel);
-  }
-
-  _bindChannel(channel) {
-    this.channel = channel;
-    channel.onopen = () => this.cb.onOpen?.();
-    channel.onclose = () => this.cb.onClose?.('channel_closed');
-    channel.onmessage = (e) => {
-      try {
-        this.cb.onMessage?.(JSON.parse(e.data));
-      } catch {
-        /* ignore malformed */
-      }
-    };
-  }
-
-  _send(obj) {
-    if (this.ws?.readyState === WebSocket.OPEN) this.ws.send(JSON.stringify(obj));
-  }
-
-  async _onSignal(msg) {
-    switch (msg.type) {
-      case 'created':
-        this.cb.onCode?.(msg.code);
-        break;
-
-      case 'joined':
-        this.cb.onConnecting?.();
-        break;
-
-      // Host side: guest arrived → create channel + offer.
-      case 'peer-joined': {
-        this.cb.onConnecting?.();
-        const channel = this.pc.createDataChannel('game', { ordered: true });
-        this._bindChannel(channel);
-        const offer = await this.pc.createOffer();
-        await this.pc.setLocalDescription(offer);
-        this._send({ type: 'signal', data: { sdp: this.pc.localDescription } });
-        break;
-      }
-
-      case 'signal':
-        await this._onRtcSignal(msg.data);
-        break;
-
-      case 'peer-left':
-        this.cb.onClose?.('peer_left');
-        break;
-
-      case 'error':
-        this.cb.onError?.(msg.reason);
-        break;
-    }
-  }
-
-  async _onRtcSignal(data) {
-    if (data.sdp) {
-      await this.pc.setRemoteDescription(data.sdp);
-      if (data.sdp.type === 'offer') {
-        const answer = await this.pc.createAnswer();
-        await this.pc.setLocalDescription(answer);
-        this._send({ type: 'signal', data: { sdp: this.pc.localDescription } });
-      }
-    } else if (data.candidate) {
-      try {
-        await this.pc.addIceCandidate(data.candidate);
-      } catch {
-        /* candidate may arrive before remote desc; browsers usually queue */
-      }
-    }
+  _bindConn(conn) {
+    this.conn = conn;
+    conn.on('open', () => this.cb.onOpen?.());
+    conn.on('data', (data) => this.cb.onMessage?.(data));
+    conn.on('close', () => this.cb.onClose?.('peer_left'));
+    conn.on('error', () => this.cb.onClose?.('conn_error'));
   }
 
   // --- Public API -----------------------------------------------------------
 
-  async host() {
+  host() {
     this.role = 'host';
-    await this._connectSignaling();
-    this._setupPeerConnection();
-    this._send({ type: 'create' });
+    this._tryHost(0);
   }
 
-  async join(code) {
+  _tryHost(attempt) {
+    const code = String(Math.floor(100000 + Math.random() * 900000));
+    const pjs = this._newPeer(PREFIX + code);
+    this.pjs = pjs;
+
+    pjs.on('open', () => this.cb.onCode?.(code));
+    pjs.on('connection', (conn) => {
+      this.cb.onConnecting?.();
+      this._bindConn(conn);
+    });
+    pjs.on('error', (err) => {
+      // Code already in use on the broker → pick another and retry.
+      if (err.type === 'unavailable-id' && attempt < 5) {
+        pjs.destroy();
+        this._tryHost(attempt + 1);
+      } else if (err.type !== 'peer-unavailable') {
+        this.cb.onError?.(err.type);
+      }
+    });
+  }
+
+  join(code) {
     this.role = 'guest';
-    await this._connectSignaling();
-    this._setupPeerConnection();
-    this._send({ type: 'join', code });
+    const pjs = this._newPeer(undefined);
+    this.pjs = pjs;
+
+    pjs.on('open', () => {
+      this.cb.onConnecting?.();
+      const conn = pjs.connect(PREFIX + code, { reliable: true });
+      this._bindConn(conn);
+    });
+    pjs.on('error', (err) => {
+      // Wrong/empty code → the host peer doesn't exist on the broker.
+      const reason = err.type === 'peer-unavailable' ? 'no_such_room' : err.type;
+      this.cb.onError?.(reason);
+    });
   }
 
-  // Send a game message to the peer over the data channel.
   send(obj) {
-    if (this.channel?.readyState === 'open') this.channel.send(JSON.stringify(obj));
+    if (this.conn && this.conn.open) this.conn.send(obj);
   }
 }

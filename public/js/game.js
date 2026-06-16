@@ -9,8 +9,8 @@
 // The host holds the full case file (including the solution) and is the
 // authority that checks the final accusation.
 
-import { Peer } from '/js/rtc.js';
-import { Soundtrack } from '/js/audio.js';
+import { Peer } from './rtc.js';
+import { Soundtrack } from './audio.js';
 
 const $ = (sel) => document.querySelector(sel);
 const screens = {};
@@ -44,11 +44,11 @@ function escapeHtml(s) {
 
 // --- Case loading -----------------------------------------------------------
 // The host picks a case on the home screen; default is the last in the manifest.
-let selectedCaseFile = '/cases/case-03.json';
+let selectedCaseFile = 'cases/case-03.json';
 
 async function populateCasePicker() {
   try {
-    const manifest = await (await fetch('/cases/manifest.json')).json();
+    const manifest = await (await fetch('cases/manifest.json')).json();
     const sel = $('#case-select');
     sel.innerHTML = manifest.map((c) => `<option value="${c.file}">${escapeHtml(c.title)}</option>`).join('');
     sel.value = selectedCaseFile = manifest[manifest.length - 1].file;

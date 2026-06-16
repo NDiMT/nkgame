@@ -1,18 +1,20 @@
 // Minimal service worker — enables "Add to Home Screen" (PWA) and offline
 // loading of the app shell. Network-first so updates always win; cache is a
-// fallback when offline. Bump CACHE on each release to invalidate.
-const CACHE = 'nkgame-v3';
+// fallback when offline. Relative URLs so it works under any base path
+// (e.g. GitHub Pages project sites at /<repo>/). Bump CACHE on each release.
+const CACHE = 'nkgame-v4';
 const SHELL = [
-  '/',
-  '/index.html',
-  '/css/style.css',
-  '/js/game.js',
-  '/js/rtc.js',
-  '/js/audio.js',
-  '/assets/cover.jpg',
-  '/assets/bg.jpg',
-  '/assets/paper.jpg',
-  '/manifest.webmanifest',
+  './',
+  'index.html',
+  'css/style.css',
+  'js/game.js',
+  'js/rtc.js',
+  'js/audio.js',
+  'js/config.js',
+  'assets/cover.jpg',
+  'assets/bg.jpg',
+  'assets/paper.jpg',
+  'manifest.webmanifest',
 ];
 
 self.addEventListener('install', (e) => {
@@ -26,8 +28,8 @@ self.addEventListener('activate', (e) => {
 });
 
 self.addEventListener('fetch', (e) => {
-  // Never cache signaling/config — they must be live.
-  if (e.request.url.includes('/config.js') || e.request.url.startsWith('ws')) return;
+  // Only handle same-origin GETs; let the PeerJS broker (cross-origin) pass through.
+  if (e.request.method !== 'GET' || new URL(e.request.url).origin !== location.origin) return;
   e.respondWith(
     fetch(e.request)
       .then((res) => {

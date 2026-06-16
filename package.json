@@ -9,9 +9,7 @@
     "dev": "node --watch server/signaling.js",
     "generate-case": "node tools/generate-case.js"
   },
-  "dependencies": {
-    "ws": "^8.18.0"
-  },
+  "dependencies": {},
   "optionalDependencies": {
     "@anthropic-ai/sdk": "^0.69.0",
     "@google/genai": "^1.0.0"

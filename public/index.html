@@ -5,15 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
   <meta name="theme-color" content="#14101a">
   <title>Νυχτερινός Φάκελος — Coop Μυστήριο</title>
-  <link rel="manifest" href="/manifest.webmanifest">
-  <link rel="stylesheet" href="/css/style.css">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 </head>
 <body>
   <button id="mute" aria-label="Ήχος">🔊</button>
 
   <!-- HOME -->
   <section id="screen-home" class="screen">
-    <img class="cover" src="/assets/cover.jpg" alt="" loading="eager">
+    <img class="cover" src="assets/cover.jpg" alt="" loading="eager">
     <h1>🕵️ Νυχτερινός Φάκελος</h1>
     <p class="tagline">Συνεργατικό μυστήριο για 2 ντετέκτιβ. Ο καθένας βλέπει διαφορετικά στοιχεία — λύστε το μαζί.</p>
     <label class="picker-label" for="case-select">Διάλεξε υπόθεση (ο δημιουργός επιλέγει)</label>
@@ -75,9 +76,9 @@
     <button id="btn-again" class="primary hidden">Νέο παιχνίδι</button>
   </section>
 
-  <script type="module" src="/js/game.js"></script>
+  <script type="module" src="js/game.js"></script>
   <script>
-    if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
+    if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
   </script>
 </body>
 </html>

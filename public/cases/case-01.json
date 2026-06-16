@@ -6,88 +6,88 @@
     {
       "id": "s1",
       "name": "Στέφανος, ο μπάτλερ",
-      "image": "/cases/img/case-01/s1.jpg"
+      "image": "cases/img/case-01/s1.jpg"
     },
     {
       "id": "s2",
       "name": "Ελένη, η ανιψιά",
-      "image": "/cases/img/case-01/s2.jpg"
+      "image": "cases/img/case-01/s2.jpg"
     },
     {
       "id": "s3",
       "name": "Βίκτωρ, ο επιχειρηματίας",
-      "image": "/cases/img/case-01/s3.jpg"
+      "image": "cases/img/case-01/s3.jpg"
     }
   ],
   "weapons": [
     {
       "id": "w1",
       "name": "Δηλητήριο",
-      "image": "/cases/img/case-01/w1.jpg"
+      "image": "cases/img/case-01/w1.jpg"
     },
     {
       "id": "w2",
       "name": "Κηροπήγιο",
-      "image": "/cases/img/case-01/w2.jpg"
+      "image": "cases/img/case-01/w2.jpg"
     },
     {
       "id": "w3",
       "name": "Μαχαίρι",
-      "image": "/cases/img/case-01/w3.jpg"
+      "image": "cases/img/case-01/w3.jpg"
     }
   ],
   "motives": [
     {
       "id": "m1",
       "name": "Κληρονομιά",
-      "image": "/cases/img/case-01/m1.jpg"
+      "image": "cases/img/case-01/m1.jpg"
     },
     {
       "id": "m2",
       "name": "Εκδίκηση",
-      "image": "/cases/img/case-01/m2.jpg"
+      "image": "cases/img/case-01/m2.jpg"
     },
     {
       "id": "m3",
       "name": "Χρέη",
-      "image": "/cases/img/case-01/m3.jpg"
+      "image": "cases/img/case-01/m3.jpg"
     }
   ],
   "clues": [
     {
       "id": "c1",
       "forPlayer": 1,
-      "image": "/cases/img/case-01/c1.jpg",
+      "image": "cases/img/case-01/c1.jpg",
       "text": "Στο κρυστάλλινο ποτήρι του θύματος εντοπίστηκαν ίχνη μιας άγευστης, διαλυμένης ουσίας."
     },
     {
       "id": "c2",
       "forPlayer": 1,
-      "image": "/cases/img/case-01/c2.jpg",
+      "image": "cases/img/case-01/c2.jpg",
       "text": "Ο Στέφανος ο μπάτλερ ήταν όλη τη νύχτα στην κουζίνα, με δύο μάρτυρες να τον επιβεβαιώνουν."
     },
     {
       "id": "c3",
       "forPlayer": 1,
-      "image": "/cases/img/case-01/c3.jpg",
+      "image": "cases/img/case-01/c3.jpg",
       "text": "Η διαθήκη του Καλντέρα άλλαξε μόλις την προηγούμενη εβδομάδα, υπέρ ενός μόνο κληρονόμου."
     },
     {
       "id": "c4",
       "forPlayer": 2,
-      "image": "/cases/img/case-01/c4.jpg",
+      "image": "cases/img/case-01/c4.jpg",
       "text": "Μόνο ένα άτομο είχε κλειδί για το ιδιωτικό μπαρ απ' όπου σερβιρίστηκε το τελευταίο ποτό: η Ελένη."
     },
     {
       "id": "c5",
       "forPlayer": 2,
-      "image": "/cases/img/case-01/c5.jpg",
+      "image": "cases/img/case-01/c5.jpg",
       "text": "Ο Βίκτωρ χρωστούσε πολλά, όμως οι κάμερες δείχνουν ότι έφυγε από την έπαυλη πριν καν αρχίσει το δείπνο."
     },
     {
       "id": "c6",
       "forPlayer": 2,
-      "image": "/cases/img/case-01/c6.jpg",
+      "image": "cases/img/case-01/c6.jpg",
       "text": "Σύμφωνα με τον δικηγόρο, η Ελένη ήταν η μοναδική που κέρδιζε από τη νέα διαθήκη."
     }
   ],
