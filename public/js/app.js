@@ -99,7 +99,9 @@ function renderCombat() {
     <div class="enemy">
       <div class="intent">${planLabel(incoming)}</div>
       ${img(e.img, 'enemy-art')}
-      <div class="enemy-name">${e.name} ${e.dodge > 0 ? `<span class="badge dge">💨×${e.dodge}</span>` : ''}</div>
+      <div class="enemy-name">${e.name}
+        ${e.dodge > 0 ? `<span class="badge dge">💨×${e.dodge}</span>` : ''}
+        ${e.poison > 0 ? `<span class="badge psn">☠ ${e.poison}</span>` : ''}</div>
       ${bar(e.hp, e.maxHp)}
     </div>`;
 
@@ -108,7 +110,8 @@ function renderCombat() {
     <div class="pstat">❤️ ${bar(p.hp, p.maxHp)}</div>
     <div class="pbadges">
       <span class="energy">⚡ ${p.stamina}/${p.maxStamina}</span>
-      ${p.maxArcane > 0 ? `<span class="badge arc">🔮 ${p.arcane}/${p.maxArcane}</span>` : ''}
+      ${p.maxArcane > 0 ? `<span class="badge arc">${(CLASSES[run.classId].chargeIcon || '🔮')} ${p.arcane}/${p.maxArcane}</span>` : ''}
+      ${p.hidden > 0 ? `<span class="badge hid">🌫 hidden</span>` : ''}
       ${c.chain > 0 ? `<span class="badge cmb">🔗 chain ${c.chain}</span>` : ''}
       ${p.block > 0 ? `<span class="badge blk">🛡 ${p.block}</span>` : ''}
       ${p.dodge > 0 ? `<span class="badge dge">💨 ${p.dodge}</span>` : ''}

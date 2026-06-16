@@ -47,12 +47,31 @@ const CARD_PROMPTS = {
   insight: 'an open glowing spellbook with floating arcane runes',
   magicshield: 'a glowing blue hexagonal magical barrier shield',
   blink: 'a wizard teleporting in a flash with a sparkling afterimage',
+  // rogue
+  throwknife: 'a spinning thrown dagger with a motion streak',
+  backstab: 'a rogue stabbing from behind in the shadows, sneak attack',
+  poisonblade: 'a curved dagger dripping with green poison',
+  shadowstep: 'a rogue dashing through shadow with a dark smoke trail',
+  eviscerate: 'twin daggers slashing in a brutal bleeding X strike',
+  vanish: 'a rogue vanishing into a puff of dark smoke, going invisible',
+  smokebomb: 'a bursting grey smoke bomb cloud',
+  trickdodge: 'a rogue acrobatically dodging a blow and flipping aside',
+  // hunter
+  shoot: 'an arrow flying from a drawn bow',
+  volley: 'a volley of multiple arrows raining down',
+  aimedshot: 'a hunter aiming a bow with a precise targeting reticle, charged shot',
+  multishot: 'a bow firing three arrows at once in a spread',
+  takeaim: 'a hunter drawing a bowstring taut, focused aim, glowing eye',
+  trap: 'a spiked snare bear trap on the ground',
+  dodgeroll: 'an agile hunter rolling sideways to dodge, motion blur',
 };
 
 // Class portraits for the select screen.
 const CLASS_PROMPTS = {
   class_fighter: 'a stalwart armored knight fighter holding sword and shield, heroic character portrait',
   class_wizard: 'a robed wizard holding a glowing magic staff, arcane runes swirling, character portrait',
+  class_rogue: 'a hooded rogue assassin with twin daggers, shadowy cloak, sly character portrait',
+  class_hunter: 'a ranger hunter with a longbow and quiver, green cloak, focused character portrait',
 };
 
 const ENEMY_PROMPTS = {

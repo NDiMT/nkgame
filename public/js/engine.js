@@ -16,8 +16,8 @@ export function createCombat(run, enemyId) {
   const cls = CLASSES[run.classId] || CLASSES.fighter;
   const hp = rand(def.hp[0], def.hp[1]);
   const c = {
-    player: { hp: run.hp, maxHp: run.maxHp, stamina: cls.maxStamina, maxStamina: cls.maxStamina, arcane: 0, maxArcane: cls.maxArcane, block: 0, dodge: 0, counter: 0 },
-    enemy: { id: enemyId, name: def.name, img: def.img, hp, maxHp: hp, dodge: def.dodge, maxDodge: def.dodge, plans: def.plans, plan: pickPlan(def) },
+    player: { hp: run.hp, maxHp: run.maxHp, stamina: cls.maxStamina, maxStamina: cls.maxStamina, arcane: 0, maxArcane: cls.maxArcane, block: 0, dodge: 0, counter: 0, hidden: 0 },
+    enemy: { id: enemyId, name: def.name, img: def.img, hp, maxHp: hp, dodge: def.dodge, maxDodge: def.dodge, poison: 0, plans: def.plans, plan: pickPlan(def) },
     phase: 'attack',
     chain: 0,
     round: 1,
@@ -72,6 +72,10 @@ function applyEffects(c, list) {
     switch (e.op) {
       case 'damage': dealToEnemy(c, e.value, e.ignoreDodge); break;
       case 'chainDamage': dealToEnemy(c, e.base + e.per * c.chain); break;
+      case 'sneakDamage': dealToEnemy(c, e.base + (p.hidden > 0 ? e.bonus : 0)); break;
+      case 'poisonDamage': dealToEnemy(c, e.base + e.per * c.enemy.poison); break;
+      case 'hide': p.hidden += e.value; break;
+      case 'poison': c.enemy.poison += e.value; break;
       case 'block': p.block += e.value; break;
       case 'dodge': p.dodge += e.value; break;
       case 'counter': p.counter += e.value; break;
@@ -119,7 +123,9 @@ export function toDefense(c) {
   if (c.over || c.phase !== 'attack') return;
   c.phase = 'defense';
   c.chain = 0;
-  c.incoming = [...c.enemy.plan.hits];
+  // Hidden (Rogue): the enemy can't find you — no incoming attack this phase.
+  if (c.player.hidden > 0) { c.player.hidden--; c.incoming = []; }
+  else c.incoming = [...c.enemy.plan.hits];
 }
 
 export function resolveDefense(c) {
@@ -132,6 +138,8 @@ export function resolveDefense(c) {
     p.hp -= hit - blocked;
   }
   if (p.counter > 0) dealToEnemy(c, p.counter, true);
+  // Poison (Rogue): damage over time, ticks down each round.
+  if (c.enemy.poison > 0) { dealToEnemy(c, c.enemy.poison, true); c.enemy.poison--; }
   c.incoming = null;
   if (p.hp <= 0) { p.hp = 0; c.over = true; c.won = false; return; }
   if (c.over) return;

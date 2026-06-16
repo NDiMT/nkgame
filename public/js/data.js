@@ -1,11 +1,13 @@
-// Game data (English) — Card Quest-faithful combat with multiple classes.
+// Game data (English) — Card Quest-faithful combat, four classes.
 //
-// Combat: 5-card hand, stamina + (Wizard) arcane charges, Mulligan, attack/
-// defense phases, CHAINING (consecutive non-chainbreaker cards give draw/stamina
-// advantage to cycle your deck), enemy Dodge + Rage.
+// Combat: 5-card hand, stamina + optional class CHARGE (Wizard=arcane, Hunter=aim),
+// Mulligan, attack/defense phases, CHAINING (consecutive non-chainbreaker cards
+// give draw/stamina advantage to cycle your deck), enemy Dodge + Rage.
+// Rogue adds Hidden (stealth → enemy can't attack) and Poison (damage over time).
 //
-// Effect ops: damage, chainDamage(base,per), block, dodge, counter, draw,
-//             stamina, heal, arcane
+// Effect ops: damage, chainDamage(base,per), sneakDamage(base,bonus),
+//   poisonDamage(base,per), block, dodge, counter, draw, stamina, arcane(charge),
+//   heal, hide, poison
 
 export const CARDS = {
   // ===== Fighter =====
@@ -30,7 +32,7 @@ export const CARDS = {
   brace: { id: 'brace', name: 'Brace', use: 'defense', type: 'defense', img: 'card_brace',
     desc: 'Gain 4 block. Heal 3.', effects: [{ op: 'block', value: 4 }, { op: 'heal', value: 3 }] },
 
-  // ===== Wizard ===== (arcane charges build up, then power big spells)
+  // ===== Wizard (arcane charges) =====
   spark: { id: 'spark', name: 'Spark', use: 'attack', cost: 1, type: 'attack', img: 'card_spark',
     desc: 'Deal 3. Gain 1 arcane.  Chain: draw 1.', effects: [{ op: 'damage', value: 3 }, { op: 'arcane', value: 1 }], chain: [{ op: 'draw', value: 1 }] },
   lightning: { id: 'lightning', name: 'Lightning', use: 'attack', cost: 1, type: 'attack', img: 'card_lightning',
@@ -45,6 +47,40 @@ export const CARDS = {
     desc: 'Gain 9 block.', effects: [{ op: 'block', value: 9 }] },
   blink: { id: 'blink', name: 'Blink', use: 'defense', type: 'defense', img: 'card_blink',
     desc: 'Negate the next hit. Draw 1.', effects: [{ op: 'dodge', value: 1 }, { op: 'draw', value: 1 }] },
+
+  // ===== Rogue (Hidden + Poison) =====
+  throwknife: { id: 'throwknife', name: 'Throwing Knife', use: 'attack', cost: 1, type: 'attack', img: 'card_throwknife',
+    desc: 'Deal 3.  Chain: draw 1.', effects: [{ op: 'damage', value: 3 }], chain: [{ op: 'draw', value: 1 }] },
+  backstab: { id: 'backstab', name: 'Backstab', use: 'attack', cost: 1, type: 'attack', img: 'card_backstab',
+    desc: 'Deal 4. +6 if Hidden.', effects: [{ op: 'sneakDamage', base: 4, bonus: 6 }] },
+  poisonblade: { id: 'poisonblade', name: 'Poison Blade', use: 'attack', cost: 1, type: 'attack', img: 'card_poisonblade',
+    desc: 'Deal 2. Apply 3 Poison.  Chain: draw 1.', effects: [{ op: 'damage', value: 2 }, { op: 'poison', value: 3 }], chain: [{ op: 'draw', value: 1 }] },
+  shadowstep: { id: 'shadowstep', name: 'Shadowstep', use: 'attack', cost: 1, type: 'attack', img: 'card_shadowstep',
+    desc: 'Deal 5.  Chain: refund 1 stamina and draw 1.', effects: [{ op: 'damage', value: 5 }], chain: [{ op: 'stamina', value: 1 }, { op: 'draw', value: 1 }] },
+  eviscerate: { id: 'eviscerate', name: 'Eviscerate', use: 'attack', cost: 2, type: 'attack', img: 'card_eviscerate',
+    desc: 'Deal 5 +3 per Poison on the enemy. Breaks chain.', effects: [{ op: 'poisonDamage', base: 5, per: 3 }], chainbreaker: true },
+  vanish: { id: 'vanish', name: 'Vanish', use: 'utility', cost: 1, type: 'utility', img: 'card_vanish',
+    desc: 'Become Hidden (enemy can’t attack next phase). Draw 1.', effects: [{ op: 'hide', value: 1 }, { op: 'draw', value: 1 }] },
+  smokebomb: { id: 'smokebomb', name: 'Smoke Bomb', use: 'defense', type: 'defense', img: 'card_smokebomb',
+    desc: 'Negate the next 3 hits.', effects: [{ op: 'dodge', value: 3 }] },
+  trickdodge: { id: 'trickdodge', name: 'Trick Dodge', use: 'defense', type: 'defense', img: 'card_trickdodge',
+    desc: 'Negate 1 hit and counter for 6.', effects: [{ op: 'dodge', value: 1 }, { op: 'counter', value: 6 }] },
+
+  // ===== Hunter (aim charges, chain-heavy) =====
+  shoot: { id: 'shoot', name: 'Shoot', use: 'attack', cost: 1, type: 'attack', img: 'card_shoot',
+    desc: 'Deal 4. Gain 1 aim.  Chain: draw 1.', effects: [{ op: 'damage', value: 4 }, { op: 'arcane', value: 1 }], chain: [{ op: 'draw', value: 1 }] },
+  volley: { id: 'volley', name: 'Volley', use: 'attack', cost: 1, type: 'attack', img: 'card_volley',
+    desc: 'Deal 3.  Chain: refund 1 stamina and draw 1.', effects: [{ op: 'damage', value: 3 }], chain: [{ op: 'stamina', value: 1 }, { op: 'draw', value: 1 }] },
+  aimedshot: { id: 'aimedshot', name: 'Aimed Shot', use: 'attack', cost: 1, arcaneCost: 2, type: 'attack', img: 'card_aimedshot',
+    desc: 'Spend 2 aim. Deal 13. Ignores Dodge.', effects: [{ op: 'damage', value: 13, ignoreDodge: true }] },
+  multishot: { id: 'multishot', name: 'Multishot', use: 'attack', cost: 2, arcaneCost: 1, type: 'attack', img: 'card_multishot',
+    desc: 'Spend 1 aim. Deal 10. Breaks chain.', effects: [{ op: 'damage', value: 10 }], chainbreaker: true },
+  takeaim: { id: 'takeaim', name: 'Take Aim', use: 'utility', cost: 1, type: 'utility', img: 'card_takeaim',
+    desc: 'Draw 2. Gain 1 aim.  Chain: draw 1 more.', effects: [{ op: 'draw', value: 2 }, { op: 'arcane', value: 1 }], chain: [{ op: 'draw', value: 1 }] },
+  trap: { id: 'trap', name: 'Snare Trap', use: 'defense', type: 'defense', img: 'card_trap',
+    desc: 'Negate 1 hit and counter for 6.', effects: [{ op: 'dodge', value: 1 }, { op: 'counter', value: 6 }] },
+  dodgeroll: { id: 'dodgeroll', name: 'Dodge Roll', use: 'defense', type: 'defense', img: 'card_dodgeroll',
+    desc: 'Negate the next hit. Draw 1.', effects: [{ op: 'dodge', value: 1 }, { op: 'draw', value: 1 }] },
 };
 
 export const CLASSES = {
@@ -55,14 +91,25 @@ export const CLASSES = {
     deck: ['jab', 'jab', 'slash', 'combo', 'combo', 'heavy', 'focus', 'block', 'dodge', 'parry'],
   },
   wizard: {
-    id: 'wizard', name: 'Wizard', img: 'class_wizard',
-    desc: 'Build arcane charges with Spark, chain Lightning to cycle your deck, then unleash Arcane Bolt & Fireball.',
+    id: 'wizard', name: 'Wizard', img: 'class_wizard', chargeIcon: '🔮', chargeName: 'arcane',
+    desc: 'Build arcane with Spark, chain Lightning to cycle your deck, then unleash Arcane Bolt & Fireball.',
     maxStamina: 3, maxArcane: 6,
     deck: ['spark', 'spark', 'lightning', 'lightning', 'fireball', 'arcanebolt', 'insight', 'magicshield', 'blink', 'blink'],
   },
+  rogue: {
+    id: 'rogue', name: 'Rogue', img: 'class_rogue',
+    desc: 'Vanish to go Hidden (enemy can’t hit you), stack Poison, and Eviscerate. Backstabs hit harder from stealth.',
+    maxStamina: 3, maxArcane: 0,
+    deck: ['throwknife', 'throwknife', 'backstab', 'poisonblade', 'poisonblade', 'shadowstep', 'eviscerate', 'vanish', 'smokebomb', 'trickdodge'],
+  },
+  hunter: {
+    id: 'hunter', name: 'Hunter', img: 'class_hunter', chargeIcon: '🎯', chargeName: 'aim',
+    desc: 'Ranged and chain-heavy. Build aim, chain Volley/Shoot to cycle, then Aimed Shot & Multishot. Hardest class.',
+    maxStamina: 3, maxArcane: 6,
+    deck: ['shoot', 'shoot', 'volley', 'volley', 'aimedshot', 'multishot', 'takeaim', 'trap', 'dodgeroll', 'volley'],
+  },
 };
 
-// Equipment grants cards (deck growth via loot), per class.
 export const EQUIPMENT_BY_CLASS = {
   fighter: [
     { id: 'greatsword', name: 'Greatsword', desc: 'Adds Finisher + Heavy Smash.', cards: ['finisher', 'heavy'], img: 'card_finisher' },
@@ -80,9 +127,22 @@ export const EQUIPMENT_BY_CLASS = {
     { id: 'blinkboots', name: 'Blink Boots', desc: 'Adds 2× Blink.', cards: ['blink', 'blink'], img: 'card_blink' },
     { id: 'sagegem', name: 'Sage Gem', desc: 'Adds 2× Arcane Insight.', cards: ['insight', 'insight'], img: 'card_insight' },
   ],
+  rogue: [
+    { id: 'venomkit', name: 'Venom Kit', desc: 'Adds 2× Poison Blade.', cards: ['poisonblade', 'poisonblade'], img: 'card_poisonblade' },
+    { id: 'daggerpair', name: 'Twin Stilettos', desc: 'Adds Backstab + Throwing Knife.', cards: ['backstab', 'throwknife'], img: 'card_backstab' },
+    { id: 'killer', name: 'Assassin’s Edge', desc: 'Adds Eviscerate + Shadowstep.', cards: ['eviscerate', 'shadowstep'], img: 'card_eviscerate' },
+    { id: 'smokekit', name: 'Smoke Kit', desc: 'Adds 2× Smoke Bomb.', cards: ['smokebomb', 'smokebomb'], img: 'card_smokebomb' },
+    { id: 'shadowcloak2', name: 'Veil Cloak', desc: 'Adds Vanish + Trick Dodge.', cards: ['vanish', 'trickdodge'], img: 'card_vanish' },
+  ],
+  hunter: [
+    { id: 'longbow', name: 'Longbow', desc: 'Adds Aimed Shot + Take Aim.', cards: ['aimedshot', 'takeaim'], img: 'card_aimedshot' },
+    { id: 'quiver', name: 'Full Quiver', desc: 'Adds 2× Volley.', cards: ['volley', 'volley'], img: 'card_volley' },
+    { id: 'crossbow', name: 'Heavy Crossbow', desc: 'Adds Multishot + Shoot.', cards: ['multishot', 'shoot'], img: 'card_multishot' },
+    { id: 'trapkit', name: 'Trap Kit', desc: 'Adds 2× Snare Trap.', cards: ['trap', 'trap'], img: 'card_trap' },
+    { id: 'scout', name: 'Scout Boots', desc: 'Adds 2× Dodge Roll.', cards: ['dodgeroll', 'dodgeroll'], img: 'card_dodgeroll' },
+  ],
 };
 
-// Enemies: Dodge charges, hp, telegraphed attack PLANS (multi-hit = Rage).
 export const ENEMIES = {
   goblin: { id: 'goblin', name: 'Goblin', img: 'enemy_goblin', hp: [14, 17], dodge: 1,
     plans: [{ hits: [5] }, { hits: [3, 3], rage: true }] },

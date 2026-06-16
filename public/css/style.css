@@ -158,6 +158,7 @@ h2 { font-family: 'Press Start 2P', monospace; font-size: 1rem; line-height: 1.5
 .intent { font-family: 'Press Start 2P', monospace; font-size: 0.7rem; color: #ff9b93; background: #2a1010; padding: 6px 8px; border-radius: 6px; min-height: 16px; }
 
 .badge.dge { background: #1c4a52; } .badge.cmb { background: #5a4a12; } .badge.ctr { background: #5e2535; } .badge.arc { background: #3a2a6a; }
+.badge.psn { background: #2f5e25; } .badge.hid { background: #3a3a3a; }
 .card.utility { border-top-color: #c9a227; }
 
 /* class select */
