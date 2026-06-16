@@ -1,38 +1,23 @@
-// Καρτορόγκα — single-player roguelike card dungeon crawler.
-// Run state + map + screen flow + rendering + input.
+// Cardspire-style roguelike (Card Quest-inspired): attack/defense phases,
+// combos, dodge, equipment-granted cards. Run state + flow + rendering + input.
 
-import { CARDS, ENEMIES, STARTER_DECK, REWARD_POOL, COMMON_ENEMIES } from './data.js';
-import { createCombat, playCard, endTurn, enemyIntent } from './engine.js';
+import { CARDS, ENEMIES, STARTER_DECK, EQUIPMENT, COMMON_ENEMIES } from './data.js';
+import { createCombat, playCard, canPlay, toDefense, resolveDefense } from './engine.js';
 import { Soundtrack } from './audio.js';
 
 const $ = (s) => document.querySelector(s);
 const screens = {};
 const music = new Soundtrack();
-
-let run = null; // { hp, maxHp, deck, map, position }
+let run = null;
 let combat = null;
-let pendingCard = null; // hand index awaiting a target
 
-const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
-const sample = (arr, n) => {
-  const pool = [...arr];
-  const out = [];
-  while (out.length < n && pool.length) out.push(pool.splice(Math.floor(Math.random() * pool.length), 1)[0]);
-  return out;
-};
+const sample = (arr, n) => { const p = [...arr]; const o = []; while (o.length < n && p.length) o.push(p.splice(Math.floor(Math.random() * p.length), 1)[0]); return o; };
 
-const ROOM_ICON = { combat: '⚔️', elite: '💀', rest: '🔥', treasure: '🎁', boss: '🐲' };
-const ROOM_NAME = { combat: 'Μάχη', elite: 'Ελίτ', rest: 'Ανάπαυση', treasure: 'Θησαυρός', boss: 'Αφεντικό' };
+const ROOM_ICON = { battle: '⚔️', elite: '💀', rest: '🔥', treasure: '🎁', boss: '🐲' };
+const ROOM_NAME = { battle: 'Battle', elite: 'Elite', rest: 'Rest', treasure: 'Treasure', boss: 'Boss' };
 
-// --- Screen management ------------------------------------------------------
-function show(name) {
-  Object.values(screens).forEach((el) => el.classList.add('hidden'));
-  screens[name].classList.remove('hidden');
-}
-
-function imgTag(key, cls) {
-  return `<img class="${cls}" src="assets/img/${key}.jpg" alt="" loading="lazy" onerror="this.style.display='none'">`;
-}
+function show(name) { Object.values(screens).forEach((el) => el.classList.add('hidden')); screens[name].classList.remove('hidden'); }
+function img(key, cls) { return `<img class="${cls}" src="assets/img/${key}.jpg" alt="" loading="lazy" onerror="this.style.display='none'">`; }
 
 // --- Run + map --------------------------------------------------------------
 function newRun() {
@@ -42,12 +27,11 @@ function newRun() {
 }
 
 function genMap() {
-  // A fixed-shape but randomly-populated linear descent.
-  const layout = ['combat', 'combat', 'treasure', 'combat', 'rest', 'elite', 'treasure', 'combat', 'rest', 'boss'];
+  const layout = ['battle', 'battle', 'treasure', 'battle', 'rest', 'elite', 'treasure', 'battle', 'rest', 'boss'];
   return layout.map((type) => {
-    if (type === 'combat') return { type, enemies: sample(COMMON_ENEMIES, Math.random() < 0.45 ? 2 : 1) };
-    if (type === 'elite') return { type, enemies: ['orc'] };
-    if (type === 'boss') return { type, enemies: ['lich'] };
+    if (type === 'battle') return { type, enemy: sample(COMMON_ENEMIES, 1)[0] };
+    if (type === 'elite') return { type, enemy: 'orc' };
+    if (type === 'boss') return { type, enemy: 'lich' };
     return { type };
   });
 }
@@ -55,17 +39,14 @@ function genMap() {
 function renderMap() {
   $('#map-hp').textContent = `❤️ ${run.hp}/${run.maxHp}`;
   $('#map-deck').textContent = `🃏 ${run.deck.length}`;
-  const nextIndex = run.position + 1;
-  $('#map-rooms').innerHTML = run.map
-    .map((room, i) => {
-      const state = i < nextIndex ? 'done' : i === nextIndex ? 'next' : 'locked';
-      const sub = room.enemies ? room.enemies.map((e) => ENEMIES[e].name).join(' + ') : ROOM_NAME[room.type];
-      return `<button class="room ${state}" data-i="${i}" ${state === 'next' ? '' : 'disabled'}>
-        <span class="room-icon">${ROOM_ICON[room.type]}</span>
-        <span class="room-text"><b>${ROOM_NAME[room.type]}</b><small>${sub}</small></span>
-      </button>`;
-    })
-    .join('');
+  const next = run.position + 1;
+  $('#map-rooms').innerHTML = run.map.map((room, i) => {
+    const state = i < next ? 'done' : i === next ? 'next' : 'locked';
+    const sub = room.enemy ? ENEMIES[room.enemy].name : ROOM_NAME[room.type];
+    return `<button class="room ${state}" data-i="${i}" ${state === 'next' ? '' : 'disabled'}>
+      <span class="room-icon">${ROOM_ICON[room.type]}</span>
+      <span class="room-text"><b>${ROOM_NAME[room.type]}</b><small>${sub}</small></span></button>`;
+  }).join('');
   $('#map-rooms').querySelectorAll('.room.next').forEach((b) => (b.onclick = () => enterRoom(+b.dataset.i)));
 }
 
@@ -74,145 +55,111 @@ function enterRoom(i) {
   const room = run.map[i];
   if (room.type === 'rest') return restRoom();
   if (room.type === 'treasure') return treasureRoom();
-  startCombat(room.enemies, room.type);
+  startCombat(room.enemy, room.type);
 }
 
 // --- Combat -----------------------------------------------------------------
-function startCombat(enemyIds, roomType) {
-  combat = createCombat(run, enemyIds);
+function startCombat(enemyId, roomType) {
+  combat = createCombat(run, enemyId);
   combat.roomType = roomType;
-  pendingCard = null;
   renderCombat();
   show('combat');
 }
 
-function bars(cur, max) {
+function bar(cur, max, cls = '') {
   const pct = Math.max(0, Math.round((cur / max) * 100));
-  return `<div class="bar"><span style="width:${pct}%"></span><em>${Math.max(0, cur)}/${max}</em></div>`;
+  return `<div class="bar ${cls}"><span style="width:${pct}%"></span><em>${Math.max(0, cur)}/${max}</em></div>`;
 }
 
-function statusBadges(ent) {
-  let s = '';
-  if (ent.block > 0) s += `<span class="badge blk">🛡 ${ent.block}</span>`;
-  if (ent.strength > 0) s += `<span class="badge str">💪 ${ent.strength}</span>`;
-  if (ent.vulnerable > 0) s += `<span class="badge vul">🎯 ${ent.vulnerable}</span>`;
-  if (ent.weak > 0) s += `<span class="badge wk">💧 ${ent.weak}</span>`;
-  return s;
-}
-
-function intentLabel(e) {
-  const m = enemyIntent(e);
-  if (m.type === 'attack' || m.type === 'attack_debuff') {
-    const dmg = m.value + (e.strength || 0);
-    return `<span class="intent atk">⚔️ ${dmg}${m.type === 'attack_debuff' ? '＋' : ''}</span>`;
-  }
-  if (m.type === 'block') return `<span class="intent def">🛡 ${m.value}</span>`;
-  if (m.type === 'buff') return `<span class="intent buf">💪</span>`;
-  return '';
-}
+function planLabel(hits) { return hits.map((h) => `⚔️${h}`).join(' '); }
 
 function renderCombat() {
-  // Enemies
-  $('#enemies').innerHTML = combat.enemies
-    .map((e, i) => {
-      if (e.hp <= 0) return '';
-      const targetable = pendingCard !== null ? 'targetable' : '';
-      return `<button class="enemy ${targetable}" data-i="${i}">
-        <div class="intent-row">${intentLabel(e)}</div>
-        ${imgTag(e.img, 'enemy-art')}
-        <div class="enemy-name">${e.name}</div>
-        ${bars(e.hp, e.maxHp)}
-        <div class="badges">${statusBadges(e)}</div>
-      </button>`;
-    })
-    .join('');
-  $('#enemies').querySelectorAll('.enemy').forEach((b) => (b.onclick = () => onEnemyClick(+b.dataset.i)));
+  const c = combat, p = c.player, e = c.enemy;
+  const defense = c.phase === 'defense';
 
-  // Player stats
-  const p = combat.player;
-  $('#player-stats').innerHTML = `
-    <div class="pstat">❤️ ${bars(p.hp, p.maxHp)}</div>
-    <div class="pbadges">
-      <span class="energy">⚡ ${p.energy}/${p.maxEnergy}</span>
-      ${statusBadges(p)}
+  $('#phase-banner').textContent = defense ? 'DEFENSE PHASE — answer the incoming attack' : 'ATTACK PHASE — chain cards for combos';
+  $('#phase-banner').className = 'phase-banner ' + (defense ? 'def' : 'atk');
+
+  // Enemy
+  const incoming = defense ? c.incoming : c.enemy.plan.hits;
+  $('#enemy-area').innerHTML = `
+    <div class="enemy">
+      <div class="intent">${planLabel(incoming)}</div>
+      ${img(e.img, 'enemy-art')}
+      <div class="enemy-name">${e.name} ${e.dodge > 0 ? `<span class="badge dge">💨×${e.dodge}</span>` : ''}</div>
+      ${bar(e.hp, e.maxHp)}
     </div>`;
 
+  // Player stats
+  $('#player-stats').innerHTML = `
+    <div class="pstat">❤️ ${bar(p.hp, p.maxHp)}</div>
+    <div class="pbadges">
+      <span class="energy">⚡ ${p.stamina}/${p.maxStamina}</span>
+      ${p.combo > 0 ? `<span class="badge cmb">🔗 ${p.combo}</span>` : ''}
+      ${p.block > 0 ? `<span class="badge blk">🛡 ${p.block}</span>` : ''}
+      ${p.dodge > 0 ? `<span class="badge dge">💨 ${p.dodge}</span>` : ''}
+      ${p.counter > 0 ? `<span class="badge ctr">⚡counter ${p.counter}</span>` : ''}
+    </div>`;
+
+  // Phase button
+  const btn = $('#phase-btn');
+  btn.textContent = defense ? 'Resolve ▶' : 'Defend ▶';
+  btn.onclick = defense ? doResolve : doDefend;
+
   // Hand
-  $('#hand').innerHTML = combat.hand
-    .map((id, i) => {
-      const c = CARDS[id];
-      const cheap = c.cost <= p.energy;
-      const sel = pendingCard === i ? 'selected' : '';
-      return `<button class="card ${c.type} ${cheap ? '' : 'unaffordable'} ${sel}" data-i="${i}">
-        <span class="cost">${c.cost}</span>
-        ${imgTag(c.img, 'card-art')}
-        <span class="cname">${c.name}</span>
-        <span class="cdesc">${c.desc}</span>
-      </button>`;
-    })
-    .join('');
-  $('#hand').querySelectorAll('.card').forEach((b) => (b.onclick = () => onCardClick(+b.dataset.i)));
+  $('#hand').innerHTML = c.hand.map((id, i) => {
+    const card = CARDS[id];
+    const playable = canPlay(c, i);
+    return `<button class="card ${card.type} ${playable ? '' : 'unplayable'}" data-i="${i}">
+      ${card.use !== 'defense' ? `<span class="cost">${card.cost}</span>` : '<span class="cost def">DEF</span>'}
+      ${img(card.img, 'card-art')}
+      <span class="cname">${card.name}</span><span class="cdesc">${card.desc}</span></button>`;
+  }).join('');
+  $('#hand').querySelectorAll('.card').forEach((b) => (b.onclick = () => onCard(+b.dataset.i)));
 
-  $('#draw-count').textContent = combat.drawPile.length;
-  $('#discard-count').textContent = combat.discardPile.length;
+  $('#draw-count').textContent = c.drawPile.length;
+  $('#discard-count').textContent = c.discardPile.length;
 
-  if (combat.over) setTimeout(() => endCombat(), 400);
+  if (c.over) setTimeout(endCombat, 350);
 }
 
-function aliveCount() {
-  return combat.enemies.filter((e) => e.hp > 0).length;
-}
-
-function onCardClick(i) {
-  const c = CARDS[combat.hand[i]];
-  if (!c || c.cost > combat.player.energy || combat.over) return;
-  const singleTargetAttack = c.effects.some((e) => e.op === 'damage' || e.op === 'vulnerable' || e.op === 'weak');
-  if (singleTargetAttack && aliveCount() > 1) {
-    pendingCard = pendingCard === i ? null : i; // toggle target mode
-    renderCombat();
-    return;
-  }
-  playCard(combat, i, combat.enemies.findIndex((e) => e.hp > 0));
-  pendingCard = null;
+function onCard(i) {
+  if (!canPlay(combat, i)) return;
+  playCard(combat, i);
   renderCombat();
 }
-
-function onEnemyClick(i) {
-  if (pendingCard === null) return;
-  playCard(combat, pendingCard, i);
-  pendingCard = null;
-  renderCombat();
-}
-
-function onEndTurn() {
-  if (combat.over) return;
-  pendingCard = null;
-  endTurn(combat);
-  renderCombat();
-}
+function doDefend() { toDefense(combat); renderCombat(); }
+function doResolve() { resolveDefense(combat); renderCombat(); }
 
 function endCombat() {
   if (!combat.won) return gameOver();
-  run.hp = combat.player.hp; // carry HP forward
+  run.hp = combat.player.hp;
   if (combat.roomType === 'boss') return victory();
   rewardScreen(combat.roomType === 'elite');
 }
 
-// --- Reward / events --------------------------------------------------------
+// --- Rewards / events (equipment grants cards) ------------------------------
+function equipCard(eq) {
+  const c = CARDS[eq.cards[0]];
+  return `<button class="card ${c.type}" data-id="${eq.id}">
+    ${img(eq.img, 'card-art')}
+    <span class="cname">${eq.name}</span><span class="cdesc">${eq.desc}</span></button>`;
+}
+
+function offerEquipment(container, onPick) {
+  const choices = sample(EQUIPMENT, 3);
+  container.innerHTML = choices.map(equipCard).join('');
+  container.querySelectorAll('.card').forEach((b) => (b.onclick = () => {
+    const eq = EQUIPMENT.find((x) => x.id === b.dataset.id);
+    run.deck.push(...eq.cards);
+    onPick();
+  }));
+}
+
 function rewardScreen(elite) {
-  const choices = sample(REWARD_POOL, 3);
-  $('#reward-title').textContent = elite ? 'Λάφυρα Ελίτ — διάλεξε μια κάρτα' : 'Νίκη! Διάλεξε μια κάρτα';
-  $('#reward-cards').innerHTML = choices
-    .map((id) => {
-      const c = CARDS[id];
-      return `<button class="card ${c.type}" data-id="${id}">
-        <span class="cost">${c.cost}</span>${imgTag(c.img, 'card-art')}
-        <span class="cname">${c.name}</span><span class="cdesc">${c.desc}</span>
-      </button>`;
-    })
-    .join('');
-  $('#reward-cards').querySelectorAll('.card').forEach((b) => (b.onclick = () => { run.deck.push(b.dataset.id); afterRoom(); }));
-  if (elite) run.hp = Math.min(run.maxHp, run.hp + 10);
+  $('#reward-title').textContent = elite ? 'Elite loot — pick equipment' : 'Victory! Pick equipment';
+  if (elite) run.hp = Math.min(run.maxHp, run.hp + 12);
+  offerEquipment($('#reward-cards'), afterRoom);
   show('reward');
 }
 
@@ -220,67 +167,44 @@ function restRoom() {
   const heal = Math.round(run.maxHp * 0.3);
   run.hp = Math.min(run.maxHp, run.hp + heal);
   $('#event-icon').textContent = '🔥';
-  $('#event-title').textContent = 'Ανάπαυση';
-  $('#event-text').textContent = `Ξεκουράζεσαι στη φωτιά και γιατρεύεις ${heal} ζωή. (❤️ ${run.hp}/${run.maxHp})`;
+  $('#event-title').textContent = 'Rest';
+  $('#event-text').textContent = `You rest by the fire and recover ${heal} HP. (❤️ ${run.hp}/${run.maxHp})`;
   $('#event-cards').innerHTML = '';
   $('#event-continue').classList.remove('hidden');
   show('event');
 }
 
 function treasureRoom() {
-  const choices = sample(REWARD_POOL, 3);
   $('#event-icon').textContent = '🎁';
-  $('#event-title').textContent = 'Θησαυρός';
-  $('#event-text').textContent = 'Βρίσκεις ένα σεντούκι. Διάλεξε μια κάρτα:';
-  $('#event-cards').innerHTML = choices
-    .map((id) => {
-      const c = CARDS[id];
-      return `<button class="card ${c.type}" data-id="${id}">
-        <span class="cost">${c.cost}</span>${imgTag(c.img, 'card-art')}
-        <span class="cname">${c.name}</span><span class="cdesc">${c.desc}</span>
-      </button>`;
-    })
-    .join('');
-  $('#event-cards').querySelectorAll('.card').forEach((b) => (b.onclick = () => { run.deck.push(b.dataset.id); afterRoom(); }));
+  $('#event-title').textContent = 'Treasure';
+  $('#event-text').textContent = 'You find a chest. Pick a piece of equipment:';
   $('#event-continue').classList.add('hidden');
+  offerEquipment($('#event-cards'), afterRoom);
   show('event');
 }
 
-function afterRoom() {
-  renderMap();
-  show('map');
-}
+function afterRoom() { renderMap(); show('map'); }
 
-// --- End states -------------------------------------------------------------
 function gameOver() {
   $('#end-emoji').textContent = '☠️';
-  $('#end-title').textContent = 'Έπεσες στο μπουντρούνι';
-  $('#end-text').textContent = `Έφτασες μέχρι το δωμάτιο ${run.position + 1}/${run.map.length}. Η περιπέτεια τελείωσε.`;
+  $('#end-title').textContent = 'You fell in the dungeon';
+  $('#end-text').textContent = `You reached room ${run.position + 1}/${run.map.length}. The run is over.`;
   show('end');
 }
-
 function victory() {
   $('#end-emoji').textContent = '👑';
-  $('#end-title').textContent = 'Νίκησες τον Λιτς Άρχοντα!';
-  $('#end-text').textContent = 'Κατέκτησες το μπουντρούνι. Μπράβο, ήρωα!';
+  $('#end-title').textContent = 'You slew the Lich Lord!';
+  $('#end-text').textContent = 'You conquered the dungeon. Well fought, hero!';
   show('end');
 }
 
 // --- Wiring -----------------------------------------------------------------
 function wire() {
-  screens.title = $('#screen-title');
-  screens.map = $('#screen-map');
-  screens.combat = $('#screen-combat');
-  screens.reward = $('#screen-reward');
-  screens.event = $('#screen-event');
-  screens.end = $('#screen-end');
-
+  for (const n of ['title', 'map', 'combat', 'reward', 'event', 'end']) screens[n] = $('#screen-' + n);
   $('#btn-start').onclick = () => { music.start(); newRun(); };
-  $('#end-turn').onclick = onEndTurn;
   $('#event-continue').onclick = afterRoom;
   $('#btn-restart').onclick = () => newRun();
   $('#mute').onclick = () => { $('#mute').textContent = music.toggle() ? '🔊' : '🔇'; };
 }
-
 wire();
 show('title');

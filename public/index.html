@@ -1,39 +1,40 @@
 <!DOCTYPE html>
-<html lang="el">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
   <meta name="theme-color" content="#0e0b14">
-  <title>Καρτορόγκα — Card Dungeon</title>
+  <title>Dungeon Cards</title>
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-  <button id="mute" aria-label="Ήχος">🔊</button>
+  <button id="mute" aria-label="Sound">🔊</button>
 
   <!-- TITLE -->
   <section id="screen-title" class="screen">
     <img class="cover" src="assets/img/cover.jpg" alt="" onerror="this.style.display='none'">
-    <h1>ΚΑΡΤΟΡΟΓΚΑ</h1>
-    <p class="tag">Ένα roguelike dungeon crawler με μάχη καρτών. Κατέβα στο μπουντρούνι, φτιάξε την τράπουλά σου, νίκησε τον Λιτς Άρχοντα.</p>
-    <button id="btn-start" class="primary">Ξεκίνα την περιπέτεια</button>
+    <h1>DUNGEON CARDS</h1>
+    <p class="tag">A roguelike card dungeon crawler. Chain attacks for combos, answer enemy strikes in the defense phase, grow your deck with equipment, and slay the Lich Lord.</p>
+    <button id="btn-start" class="primary">Start adventure</button>
   </section>
 
   <!-- MAP -->
   <section id="screen-map" class="screen hidden">
-    <div class="topbar"><span id="map-hp">❤️</span><b>Μπουντρούνι</b><span id="map-deck">🃏</span></div>
+    <div class="topbar"><span id="map-hp">❤️</span><b>Dungeon</b><span id="map-deck">🃏</span></div>
     <div id="map-rooms" class="rooms"></div>
   </section>
 
   <!-- COMBAT -->
   <section id="screen-combat" class="screen hidden">
-    <div id="enemies" class="enemies"></div>
+    <div id="phase-banner" class="phase-banner atk"></div>
+    <div id="enemy-area" class="enemy-area"></div>
     <div id="player-stats" class="player-stats"></div>
     <div class="combat-bar">
       <span class="pile">🂠 <i id="draw-count">0</i></span>
-      <button id="end-turn" class="primary">Τέλος γύρου</button>
+      <button id="phase-btn" class="primary">Defend ▶</button>
       <span class="pile">🗑 <i id="discard-count">0</i></span>
     </div>
     <div id="hand" class="hand"></div>
@@ -41,17 +42,17 @@
 
   <!-- REWARD -->
   <section id="screen-reward" class="screen hidden">
-    <h2 id="reward-title">Νίκη!</h2>
+    <h2 id="reward-title">Victory!</h2>
     <div id="reward-cards" class="card-row"></div>
   </section>
 
-  <!-- EVENT (rest / treasure) -->
+  <!-- EVENT -->
   <section id="screen-event" class="screen hidden">
     <div id="event-icon" class="event-icon">🔥</div>
     <h2 id="event-title"></h2>
     <p id="event-text" class="tag"></p>
     <div id="event-cards" class="card-row"></div>
-    <button id="event-continue" class="primary">Συνέχεια</button>
+    <button id="event-continue" class="primary">Continue</button>
   </section>
 
   <!-- END -->
@@ -59,7 +60,7 @@
     <div id="end-emoji" class="event-icon">☠️</div>
     <h2 id="end-title"></h2>
     <p id="end-text" class="tag"></p>
-    <button id="btn-restart" class="primary">Νέα περιπέτεια</button>
+    <button id="btn-restart" class="primary">New adventure</button>
   </section>
 
   <script type="module" src="js/app.js"></script>

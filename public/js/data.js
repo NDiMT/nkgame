@@ -1,56 +1,69 @@
-// Static game data: cards and enemies. Effects are declarative ({op,value})
-// so the engine can interpret them — no eval, easy to extend.
-
-// op values the engine understands:
-//   damage, damageAll, block, draw, vulnerable (enemy), weak (enemy),
-//   strength (self), heal (self)
+// Game data (English). Card Quest-inspired: attack/defense phases with stamina,
+// card chaining (combos), enemy & player dodge, equipment that grants cards.
+//
+// Card fields:
+//   use: 'attack' (play in attack phase, costs stamina) |
+//        'defense' (play in defense phase, free) | 'skill' (attack phase)
+//   cost: stamina (attack/skill only)
+//   effects: declarative ops the engine interprets
+//   chain: optional bonus applied when combo >= chain.combo
+//
+// Effect ops:
+//   damage, ignoreDamage(=damage that ignores dodge via flag), block, dodge,
+//   counter, draw, stamina, heal, finisher(=combo*value, resets combo)
 
 export const CARDS = {
-  strike: { id: 'strike', name: 'Χτύπημα', cost: 1, type: 'attack', img: 'card_strike',
-    desc: 'Κάνε 6 ζημιά.', effects: [{ op: 'damage', value: 6 }] },
-  defend: { id: 'defend', name: 'Άμυνα', cost: 1, type: 'skill', img: 'card_defend',
-    desc: 'Κέρδισε 5 ασπίδα.', effects: [{ op: 'block', value: 5 }] },
-  bash: { id: 'bash', name: 'Σύνθλιψη', cost: 2, type: 'attack', img: 'card_bash',
-    desc: 'Κάνε 8 ζημιά. Εφάρμοσε 2 Ευάλωτο.', effects: [{ op: 'damage', value: 8 }, { op: 'vulnerable', value: 2 }] },
-  cleave: { id: 'cleave', name: 'Διχοτόμηση', cost: 1, type: 'attack', img: 'card_cleave',
-    desc: 'Κάνε 7 ζημιά σε ΟΛΟΥΣ.', effects: [{ op: 'damageAll', value: 7 }] },
-  ironwave: { id: 'ironwave', name: 'Σιδερένιο Κύμα', cost: 1, type: 'attack', img: 'card_ironwave',
-    desc: 'Κάνε 5 ζημιά. Κέρδισε 5 ασπίδα.', effects: [{ op: 'damage', value: 5 }, { op: 'block', value: 5 }] },
-  pommel: { id: 'pommel', name: 'Λαβή Σπαθιού', cost: 1, type: 'attack', img: 'card_pommel',
-    desc: 'Κάνε 6 ζημιά. Τράβα 1 κάρτα.', effects: [{ op: 'damage', value: 6 }, { op: 'draw', value: 1 }] },
-  heavyblade: { id: 'heavyblade', name: 'Βαριά Λεπίδα', cost: 2, type: 'attack', img: 'card_heavyblade',
-    desc: 'Κάνε 14 ζημιά.', effects: [{ op: 'damage', value: 14 }] },
-  shrug: { id: 'shrug', name: 'Αψήφισέ το', cost: 1, type: 'skill', img: 'card_shrug',
-    desc: 'Κέρδισε 8 ασπίδα. Τράβα 1 κάρτα.', effects: [{ op: 'block', value: 8 }, { op: 'draw', value: 1 }] },
-  warcry: { id: 'warcry', name: 'Πολεμική Κραυγή', cost: 1, type: 'power', img: 'card_warcry',
-    desc: 'Κέρδισε 2 Δύναμη.', effects: [{ op: 'strength', value: 2 }] },
-  bandage: { id: 'bandage', name: 'Επίδεσμος', cost: 1, type: 'skill', img: 'card_bandage',
-    desc: 'Γιατρέψου 7.', effects: [{ op: 'heal', value: 7 }] },
-  enfeeble: { id: 'enfeeble', name: 'Εξασθένηση', cost: 1, type: 'skill', img: 'card_enfeeble',
-    desc: 'Εφάρμοσε 2 Αδυναμία.', effects: [{ op: 'weak', value: 2 }] },
-  whirlwind: { id: 'whirlwind', name: 'Ανεμοστρόβιλος', cost: 2, type: 'attack', img: 'card_whirlwind',
-    desc: 'Κάνε 5 ζημιά σε ΟΛΟΥΣ δύο φορές.', effects: [{ op: 'damageAll', value: 5 }, { op: 'damageAll', value: 5 }] },
+  // --- attacks ---
+  slash:   { id: 'slash',   name: 'Slash',        use: 'attack', cost: 1, type: 'attack', img: 'card_slash',
+    desc: 'Deal 5. Chain: +3 if combo ≥ 2.', effects: [{ op: 'damage', value: 5 }], chain: { combo: 2, effects: [{ op: 'damage', value: 3 }] } },
+  jab:     { id: 'jab',     name: 'Quick Jab',    use: 'attack', cost: 1, type: 'attack', img: 'card_jab',
+    desc: 'Deal 3. Draw 1.', effects: [{ op: 'damage', value: 3 }, { op: 'draw', value: 1 }] },
+  heavy:   { id: 'heavy',   name: 'Heavy Blow',   use: 'attack', cost: 2, type: 'attack', img: 'card_heavy',
+    desc: 'Deal 11. Ignores Dodge.', effects: [{ op: 'damage', value: 11, ignoreDodge: true }] },
+  cleave:  { id: 'cleave',  name: 'Cleave',       use: 'attack', cost: 2, type: 'attack', img: 'card_cleave',
+    desc: 'Deal 7. Chain: +combo damage.', effects: [{ op: 'damage', value: 7 }], chain: { combo: 1, effects: [{ op: 'comboDamage', value: 1 }] } },
+  finisher:{ id: 'finisher',name: 'Finisher',     use: 'attack', cost: 2, type: 'attack', img: 'card_finisher',
+    desc: 'Deal 4 × combo, then reset combo.', effects: [{ op: 'finisher', value: 4 }] },
+  // --- skills ---
+  focus:   { id: 'focus',   name: 'Focus',        use: 'skill',  cost: 0, type: 'skill', img: 'card_focus',
+    desc: 'Gain 1 stamina. Draw 1.', effects: [{ op: 'stamina', value: 1 }, { op: 'draw', value: 1 }] },
+  // --- defense (played in the defense phase, free) ---
+  block:   { id: 'block',   name: 'Block',        use: 'defense', type: 'defense', img: 'card_block',
+    desc: 'Gain 7 block.', effects: [{ op: 'block', value: 7 }] },
+  dodge:   { id: 'dodge',   name: 'Dodge',        use: 'defense', type: 'defense', img: 'card_dodge',
+    desc: 'Negate the next incoming hit.', effects: [{ op: 'dodge', value: 1 }] },
+  parry:   { id: 'parry',   name: 'Parry',        use: 'defense', type: 'defense', img: 'card_parry',
+    desc: 'Negate 1 hit and counter for 5.', effects: [{ op: 'dodge', value: 1 }, { op: 'counter', value: 5 }] },
+  brace:   { id: 'brace',   name: 'Brace',        use: 'defense', type: 'defense', img: 'card_brace',
+    desc: 'Gain 4 block. Heal 3.', effects: [{ op: 'block', value: 4 }, { op: 'heal', value: 3 }] },
 };
 
-// Starting deck for the Knight.
-export const STARTER_DECK = ['strike', 'strike', 'strike', 'strike', 'defend', 'defend', 'defend', 'defend', 'bash'];
+// Fighter starter deck (Arming Sword + Round Shield).
+export const STARTER_DECK = ['slash', 'slash', 'jab', 'heavy', 'cleave', 'block', 'block', 'dodge', 'parry', 'focus'];
 
-// Cards offered as combat rewards.
-export const REWARD_POOL = ['cleave', 'ironwave', 'pommel', 'heavyblade', 'shrug', 'warcry', 'bandage', 'enfeeble', 'whirlwind'];
+// Equipment rewards — each grants cards (this is how decks grow in Card Quest).
+export const EQUIPMENT = [
+  { id: 'battleaxe', name: 'Battle Axe', desc: 'Adds 2× Cleave.', cards: ['cleave', 'cleave'], img: 'card_cleave' },
+  { id: 'greatsword', name: 'Greatsword', desc: 'Adds Heavy Blow + Finisher.', cards: ['heavy', 'finisher'], img: 'card_heavy' },
+  { id: 'towershield', name: 'Tower Shield', desc: 'Adds 2× Block.', cards: ['block', 'block'], img: 'card_block' },
+  { id: 'cloak', name: 'Shadow Cloak', desc: 'Adds 2× Dodge.', cards: ['dodge', 'dodge'], img: 'card_dodge' },
+  { id: 'rapier', name: 'Rapier', desc: 'Adds Parry + Quick Jab.', cards: ['parry', 'jab'], img: 'card_parry' },
+  { id: 'amulet', name: 'War Amulet', desc: 'Adds Focus + Slash.', cards: ['focus', 'slash'], img: 'card_focus' },
+];
 
-// intents: { type:'attack'|'block'|'buff'|'attack_debuff', value, debuff }
+// Enemies: dodge charges, hp, and telegraphed attack PLANS (multi-hit).
+// plans: array of {hits:[...], label} — engine picks one per round and shows it.
 export const ENEMIES = {
-  slime: { id: 'slime', name: 'Πράσινο Σλάιμ', img: 'enemy_slime', hp: [13, 16],
-    moves: [{ type: 'attack', value: 6 }, { type: 'attack_debuff', value: 4, debuff: 'weak', amount: 1 }] },
-  bat: { id: 'bat', name: 'Νυχτερίδα', img: 'enemy_bat', hp: [10, 12],
-    moves: [{ type: 'attack', value: 4 }, { type: 'attack', value: 7 }] },
-  skeleton: { id: 'skeleton', name: 'Σκελετός', img: 'enemy_skeleton', hp: [18, 22],
-    moves: [{ type: 'attack', value: 9 }, { type: 'block', value: 8 }] },
-  orc: { id: 'orc', name: 'Ορκ Πολεμιστής', img: 'enemy_orc', hp: [42, 48], elite: true,
-    moves: [{ type: 'attack', value: 12 }, { type: 'buff', value: 3 }, { type: 'attack', value: 8 }] },
-  lich: { id: 'lich', name: 'Ο Λιτς Άρχοντας', img: 'enemy_lich', hp: [80, 80], boss: true,
-    moves: [{ type: 'attack', value: 16 }, { type: 'attack_debuff', value: 10, debuff: 'vulnerable', amount: 2 }, { type: 'buff', value: 4 }] },
+  goblin: { id: 'goblin', name: 'Goblin', img: 'enemy_goblin', hp: [14, 17], dodge: 1,
+    plans: [{ hits: [5] }, { hits: [3, 3] }] },
+  skeleton: { id: 'skeleton', name: 'Skeleton', img: 'enemy_skeleton', hp: [20, 24], dodge: 0,
+    plans: [{ hits: [9] }, { hits: [4, 4] }] },
+  bandit: { id: 'bandit', name: 'Bandit', img: 'enemy_bandit', hp: [16, 19], dodge: 2,
+    plans: [{ hits: [4, 4] }, { hits: [7] }] },
+  orc: { id: 'orc', name: 'Orc Warlord', img: 'enemy_orc', hp: [44, 50], dodge: 1, elite: true,
+    plans: [{ hits: [13] }, { hits: [6, 6] }, { hits: [5, 5, 5] }] },
+  lich: { id: 'lich', name: 'The Lich Lord', img: 'enemy_lich', hp: [85, 85], dodge: 2, boss: true,
+    plans: [{ hits: [18] }, { hits: [9, 9] }, { hits: [7, 7, 7] }] },
 };
 
-// Which enemies can appear in normal combats (1-2 of these).
-export const COMMON_ENEMIES = ['slime', 'bat', 'skeleton'];
+export const COMMON_ENEMIES = ['goblin', 'skeleton', 'bandit'];

@@ -29,24 +29,22 @@ const STYLE =
 
 // Visual prompt per card id (the card art).
 const CARD_PROMPTS = {
-  strike: 'a gleaming steel sword mid-slash',
-  defend: 'a sturdy wooden round shield with iron rim',
-  bash: 'a shield smashing forward with impact sparks',
+  slash: 'a gleaming steel sword mid-slash with a slash arc',
+  jab: 'a quick thrusting dagger jab with a motion streak',
+  heavy: 'a massive two-handed greatsword crashing down',
   cleave: 'a broad battle axe sweeping in a wide arc',
-  ironwave: 'a sword emitting a metallic shockwave ring',
-  pommel: 'a sword pommel strike with a small star spark',
-  heavyblade: 'a massive ornate two-handed greatsword',
-  shrug: 'an armored knight shrugging off a blow behind a glowing blue shield',
-  warcry: 'a roaring barbarian warrior with a fiery red battle aura',
-  bandage: 'a glowing green healing potion bottle with a white cross',
-  enfeeble: 'a cracked grey skull wreathed in sickly green weakening mist',
-  whirlwind: 'a swirling tornado of spinning blades',
+  finisher: 'a glowing executioner sword strike, dramatic finisher',
+  focus: 'a meditating warrior with a calm glowing blue aura',
+  block: 'a sturdy iron-rimmed round shield raised in guard',
+  dodge: 'an agile rogue leaping aside dodging, motion blur',
+  parry: 'two swords clashing in a sparking parry',
+  brace: 'a kneeling knight bracing behind a tower shield',
 };
 
 const ENEMY_PROMPTS = {
-  slime: 'a glossy green gelatinous slime monster with cute angry eyes',
-  bat: 'a dark purple winged cave bat with red eyes',
+  goblin: 'a small green goblin with a jagged dagger and big ears, sneaky',
   skeleton: 'an undead skeleton warrior holding a rusty sword and shield',
+  bandit: 'a hooded human bandit with twin daggers and a mask, agile',
   orc: 'a huge muscular brutish orc warlord wielding a giant axe, intimidating elite boss',
   lich: 'an undead lich sorcerer king with glowing cyan eyes, tattered robes and a dark crown, menacing final boss',
 };

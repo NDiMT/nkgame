@@ -8,14 +8,15 @@ anywhere. Pixel art generated with **Gemini**, procedural soundtrack via Web Aud
 - **Live (GitHub Pages):** https://ndimt.github.io/nkgame/
 - **Local:** `npm install && npm start` → http://localhost:8080
 
-## How it plays
-- Descend a dungeon of rooms: **fights, elites, treasure, rest, and a boss**.
-- **Card combat:** each turn you have 3 energy; play attacks/skills/powers from
-  your hand, manage **block**, exploit **Vulnerable/Weak**, then end your turn and
-  the enemies act (their next move is telegraphed).
-- **Deckbuilding:** win fights to add cards; build toward a strategy.
-- **Roguelike:** HP carries between fights; die and the run ends. Beat the Λιτς
-  Άρχοντα to win.
+## How it plays (Card Quest-inspired)
+- Descend a dungeon of rooms: **battles, elites, treasure, rest, and a boss**.
+- **Attack phase:** spend **stamina** to play attacks; **chain** cards for combo
+  bonuses. Enemies have **Dodge** charges that eat your hits (some cards ignore it).
+- **Defense phase:** the enemy's strike is **telegraphed**; play **Block / Dodge /
+  Parry** cards to answer it, then stamina recharges for the next round.
+- **Equipment grants cards:** loot weapons/shields/trinkets to grow your deck.
+- **Roguelike:** HP carries between fights; die and the run ends. Beat the Lich
+  Lord to win.
 
 ## Structure
 ```

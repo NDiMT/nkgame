@@ -147,6 +147,20 @@ h2 { font-family: 'Press Start 2P', monospace; font-size: 1rem; line-height: 1.5
 .card-row { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin: 16px 0; }
 .card-row .card { flex: 0 0 130px; }
 
+/* phase banner */
+.phase-banner { font-family: 'Press Start 2P', monospace; font-size: 0.58rem; line-height: 1.5; text-align: center; padding: 10px; border-radius: 6px; margin: 8px 0; border: 2px solid #000; }
+.phase-banner.atk { background: #3a1513; color: #ff9b93; }
+.phase-banner.def { background: #13243a; color: #9bc2ff; }
+
+.enemy-area { display: flex; justify-content: center; margin: 10px 0; min-height: 200px; }
+.enemy-area .enemy { width: 200px; cursor: default; }
+.enemy-area .enemy-art { width: 128px; height: 128px; }
+.intent { font-family: 'Press Start 2P', monospace; font-size: 0.7rem; color: #ff9b93; background: #2a1010; padding: 6px 8px; border-radius: 6px; min-height: 16px; }
+
+.badge.dge { background: #1c4a52; } .badge.cmb { background: #5a4a12; } .badge.ctr { background: #5e2535; }
+.cost.def { width: auto; padding: 0 6px; border-radius: 8px; font-size: 0.5rem; }
+.card.unplayable { opacity: 0.4; }
+
 /* EVENT / END */
 #screen-event, #screen-end, #screen-reward { justify-content: center; text-align: center; align-items: center; }
 .event-icon { font-size: 4rem; }
