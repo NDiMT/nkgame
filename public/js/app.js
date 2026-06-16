@@ -205,20 +205,24 @@ function renderCombat() {
   $('#phase-banner').textContent = defense ? 'DEFENSE PHASE — answer the incoming attack' : 'ATTACK PHASE — chain cards for combos';
   $('#phase-banner').className = 'phase-banner ' + (defense ? 'def' : 'atk');
 
-  // Enemy
+  // Enemy on its "stage"
   const incoming = defense ? c.incoming : c.enemy.plan.hits;
+  const intentClass = incoming.length > 1 ? 'intent rage' : 'intent';
   $('#enemy-area').innerHTML = `
     <div class="enemy">
-      <div class="intent">${planLabel(incoming)}</div>
-      ${img(e.img, 'enemy-art')}
+      <div class="${intentClass}">${incoming.length ? planLabel(incoming) : '—'}</div>
+      <div class="enemy-stage">${img(e.img, 'enemy-art')}<div class="shadow"></div></div>
       <div class="enemy-name">${e.name}
         ${e.dodge > 0 ? `<span class="badge dge">💨×${e.dodge}</span>` : ''}
         ${e.poison > 0 ? `<span class="badge psn">☠ ${e.poison}</span>` : ''}</div>
       ${bar(e.hp, e.maxHp)}
     </div>`;
 
-  // Player stats
+  // Player HUD: hero portrait + stats
+  const cls = CLASSES[run.classId];
   $('#player-stats').innerHTML = `
+    <div class="hero">${img(cls.img, 'hero-portrait')}</div>
+    <div class="hero-stats">
     <div class="pstat">❤️ ${bar(p.hp, p.maxHp)}</div>
     <div class="pbadges">
       <span class="energy">⚡ ${p.stamina}/${p.maxStamina}</span>
@@ -228,7 +232,7 @@ function renderCombat() {
       ${p.block > 0 ? `<span class="badge blk">🛡 ${p.block}</span>` : ''}
       ${p.dodge > 0 ? `<span class="badge dge">💨 ${p.dodge}</span>` : ''}
       ${p.counter > 0 ? `<span class="badge ctr">⚡counter ${p.counter}</span>` : ''}
-    </div>`;
+    </div></div>`;
 
   // Phase button + mulligan
   const btn = $('#phase-btn');

@@ -179,6 +179,47 @@ h2 { font-family: 'Press Start 2P', monospace; font-size: 1rem; line-height: 1.5
 .cost.def { width: auto; padding: 0 6px; border-radius: 8px; font-size: 0.5rem; }
 .card.unplayable { opacity: 0.4; }
 
+/* ===== Card Quest-style combat staging ===== */
+#screen-combat {
+  background:
+    linear-gradient(rgba(8,6,12,0.55), rgba(8,6,12,0.85)),
+    url('../assets/img/bg_battle.jpg') center top / cover no-repeat,
+    var(--bg);
+}
+.enemy-area { align-items: flex-start; min-height: 210px; padding-top: 6px; }
+.enemy-stage { position: relative; display: flex; flex-direction: column; align-items: center; }
+.enemy-stage .shadow { width: 90px; height: 16px; margin-top: -6px; border-radius: 50%; background: radial-gradient(rgba(0,0,0,0.6), transparent 70%); }
+.intent { box-shadow: 0 3px 0 #000; }
+.intent.rage { background: #4a1010; color: #ff8a7a; animation: rage 0.8s infinite; }
+@keyframes rage { 50% { transform: scale(1.06); } }
+
+/* Player HUD: hero portrait + stats */
+.player-stats {
+  display: flex; align-items: center; gap: 12px;
+  background: rgba(20,15,28,0.9); border: 3px solid #000; border-radius: 10px;
+  padding: 8px 12px; box-shadow: 0 4px 0 #000;
+}
+.hero { flex: none; }
+.hero-portrait { width: 56px; height: 56px; border-radius: 8px; border: 2px solid var(--gold); object-fit: cover; }
+.hero-stats { flex: 1; }
+
+/* Piles look like little card-backs */
+.combat-bar .pile {
+  background: url('../assets/img/cardback.jpg') center / cover, var(--panel);
+  border: 2px solid #000; border-radius: 5px; padding: 6px 8px; color: #fff;
+  text-shadow: 1px 1px 0 #000; font-size: 0.8rem;
+}
+
+/* Polished pixel cards */
+.card {
+  background: linear-gradient(#241b30, #16101f);
+  border: 2px solid #000; border-radius: 8px; box-shadow: 0 4px 0 #000;
+}
+.card-art { border: 2px solid #000; image-rendering: pixelated; }
+.cname { text-shadow: 1px 1px 0 #000; }
+.cdesc { background: rgba(0,0,0,0.35); border-radius: 4px; padding: 4px 5px; width: 100%; }
+.card .cost { box-shadow: 0 2px 0 #000; }
+
 /* EVENT / END */
 #screen-event, #screen-end, #screen-reward { justify-content: center; text-align: center; align-items: center; }
 .event-icon { font-size: 4rem; }
