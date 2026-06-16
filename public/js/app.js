@@ -67,42 +67,120 @@ function newRun(classId, specId) {
     startArcane: p.charge || 0,
     deck: [...spec.deck],
     map: genMap(),
-    position: -1,
+    curNode: null,
+    visited: new Set(),
   };
   renderMap();
   show('map');
 }
 
+// --- Branching dungeon map (Card Quest / StS style) -------------------------
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+
+function nodeType(r, rows, i, count) {
+  if (r === 0) return 'battle';
+  if (r === rows - 1) return 'boss';
+  if (r === rows - 2) return i === 0 ? 'rest' : 'battle'; // a rest before the boss
+  const x = Math.random();
+  if (r >= 3 && x < 0.12) return 'elite';
+  if (x < 0.30) return 'treasure';
+  if (x < 0.45) return 'rest';
+  return 'battle';
+}
+
 function genMap() {
-  const layout = ['battle', 'battle', 'treasure', 'battle', 'rest', 'elite', 'treasure', 'battle', 'rest', 'boss'];
-  return layout.map((type) => {
-    if (type === 'battle') return { type, enemy: sample(COMMON_ENEMIES, 1)[0] };
-    if (type === 'elite') return { type, enemy: 'orc' };
-    if (type === 'boss') return { type, enemy: 'lich' };
-    return { type };
-  });
+  const ROWS = 8;
+  const rows = [];
+  for (let r = 0; r < ROWS; r++) {
+    const count = r === 0 ? 2 : r === ROWS - 1 ? 1 : 2 + (Math.random() < 0.5 ? 1 : 0);
+    const row = [];
+    for (let i = 0; i < count; i++) {
+      const type = nodeType(r, ROWS, i, count);
+      const node = { row: r, i, type, next: [] };
+      if (type === 'battle') node.enemy = sample(COMMON_ENEMIES, 1)[0];
+      else if (type === 'elite') node.enemy = 'orc';
+      else if (type === 'boss') node.enemy = 'lich';
+      row.push(node);
+    }
+    rows.push(row);
+  }
+  // Edges: connect each node to 1-2 nodes in the next row by relative column.
+  for (let r = 0; r < ROWS - 1; r++) {
+    const cur = rows[r], nxt = rows[r + 1];
+    cur.forEach((node, idx) => {
+      const center = cur.length === 1 ? (nxt.length - 1) / 2 : (idx * (nxt.length - 1)) / (cur.length - 1);
+      const a = clamp(Math.round(center), 0, nxt.length - 1);
+      const set = new Set([a]);
+      if (Math.random() < 0.5) set.add(clamp(a + (Math.random() < 0.5 ? -1 : 1), 0, nxt.length - 1));
+      node.next = [...set];
+    });
+    // Guarantee every next-row node is reachable.
+    nxt.forEach((_, j) => {
+      if (!cur.some((n) => n.next.includes(j))) {
+        const from = clamp(Math.round((j * (cur.length - 1)) / Math.max(1, nxt.length - 1)), 0, cur.length - 1);
+        if (!cur[from].next.includes(j)) cur[from].next.push(j);
+      }
+    });
+  }
+  return rows;
+}
+
+function availableNodes() {
+  if (!run.curNode) return run.map[0];
+  if (run.curNode.row >= run.map.length - 1) return [];
+  return run.curNode.next.map((j) => run.map[run.curNode.row + 1][j]);
 }
 
 function renderMap() {
   $('#map-hp').textContent = `❤️ ${run.hp}/${run.maxHp}`;
   $('#map-deck').textContent = `🃏 ${run.deck.length}`;
-  const next = run.position + 1;
-  $('#map-rooms').innerHTML = run.map.map((room, i) => {
-    const state = i < next ? 'done' : i === next ? 'next' : 'locked';
-    const sub = room.enemy ? ENEMIES[room.enemy].name : ROOM_NAME[room.type];
-    return `<button class="room ${state}" data-i="${i}" ${state === 'next' ? '' : 'disabled'}>
-      <span class="room-icon">${ROOM_ICON[room.type]}</span>
-      <span class="room-text"><b>${ROOM_NAME[room.type]}</b><small>${sub}</small></span></button>`;
-  }).join('');
-  $('#map-rooms').querySelectorAll('.room.next').forEach((b) => (b.onclick = () => enterRoom(+b.dataset.i)));
+  const avail = new Set(availableNodes().map((n) => `${n.row}-${n.i}`));
+  const cont = $('#map-rooms');
+
+  cont.innerHTML = '<svg id="map-edges"></svg>' + run.map.map((row) => `
+    <div class="map-row">${row.map((n) => {
+      const id = `${n.row}-${n.i}`;
+      const state = run.visited.has(id) ? 'done' : avail.has(id) ? 'avail' : 'locked';
+      return `<button class="node ${n.type} ${state}" data-row="${n.row}" data-i="${n.i}" ${state === 'avail' ? '' : 'disabled'}>
+        <span class="node-icon">${ROOM_ICON[n.type]}</span></button>`;
+    }).join('')}</div>`).join('');
+
+  cont.querySelectorAll('.node.avail').forEach((b) => (b.onclick = () => enterRoom(run.map[+b.dataset.row][+b.dataset.i])));
+  requestAnimationFrame(drawEdges);
 }
 
-function enterRoom(i) {
-  run.position = i;
-  const room = run.map[i];
-  if (room.type === 'rest') return restRoom();
-  if (room.type === 'treasure') return treasureRoom();
-  startCombat(room.enemy, room.type);
+function drawEdges() {
+  const cont = $('#map-rooms');
+  const svg = $('#map-edges');
+  if (!svg) return;
+  const cr = cont.getBoundingClientRect();
+  svg.setAttribute('width', cont.clientWidth);
+  svg.setAttribute('height', cont.scrollHeight);
+  const center = (node) => {
+    const el = cont.querySelector(`.node[data-row="${node.row}"][data-i="${node.i}"]`);
+    const r = el.getBoundingClientRect();
+    return { x: r.left - cr.left + r.width / 2, y: r.top - cr.top + r.height / 2 };
+  };
+  let lines = '';
+  for (let r = 0; r < run.map.length - 1; r++) {
+    for (const node of run.map[r]) {
+      const a = center(node);
+      for (const j of node.next) {
+        const b = center(run.map[r + 1][j]);
+        const done = run.visited.has(`${node.row}-${node.i}`);
+        lines += `<line x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}" stroke="${done ? '#e3c269' : '#3a2f4d'}" stroke-width="3"/>`;
+      }
+    }
+  }
+  svg.innerHTML = lines;
+}
+
+function enterRoom(node) {
+  run.curNode = node;
+  run.visited.add(`${node.row}-${node.i}`);
+  if (node.type === 'rest') return restRoom();
+  if (node.type === 'treasure') return treasureRoom();
+  startCombat(node.enemy, node.type);
 }
 
 // --- Combat -----------------------------------------------------------------
@@ -244,7 +322,7 @@ function afterRoom() { renderMap(); show('map'); }
 function gameOver() {
   $('#end-emoji').textContent = '☠️';
   $('#end-title').textContent = 'You fell in the dungeon';
-  $('#end-text').textContent = `You reached room ${run.position + 1}/${run.map.length}. The run is over.`;
+  $('#end-text').textContent = `You reached depth ${(run.curNode ? run.curNode.row + 1 : 0)}/${run.map.length}. The run is over.`;
   show('end');
 }
 function victory() {
