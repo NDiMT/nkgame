@@ -1,0 +1,13 @@
+{
+  "name": "Νυχτερινός Φάκελος",
+  "short_name": "Φάκελος",
+  "description": "Συνεργατικό μυστήριο για 2 παίκτες.",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#14101a",
+  "theme_color": "#14101a",
+  "icons": [
+    { "src": "/assets/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

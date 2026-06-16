@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#14101a">
+  <title>Νυχτερινός Φάκελος — Coop Μυστήριο</title>
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <!-- HOME -->
+  <section id="screen-home" class="screen">
+    <h1>🕵️ Νυχτερινός Φάκελος</h1>
+    <p class="tagline">Συνεργατικό μυστήριο για 2 ντετέκτιβ. Ο καθένας βλέπει διαφορετικά στοιχεία — λύστε το μαζί.</p>
+    <button id="btn-create" class="primary">Δημιουργία παιχνιδιού</button>
+    <div class="divider">ή</div>
+    <div class="join-row">
+      <input id="join-code" inputmode="numeric" pattern="[0-9]*" maxlength="6" placeholder="6ψήφιος κωδικός">
+      <button id="btn-join">Σύνδεση</button>
+    </div>
+    <p id="join-error" class="error"></p>
+  </section>
+
+  <!-- LOBBY -->
+  <section id="screen-lobby" class="screen hidden">
+    <h2>Κωδικός παιχνιδιού</h2>
+    <div id="lobby-code" class="code">------</div>
+    <p id="lobby-status">...</p>
+  </section>
+
+  <!-- GAME -->
+  <section id="screen-game" class="screen hidden">
+    <h2 id="case-title"></h2>
+    <p id="case-intro" class="intro"></p>
+
+    <h3>Τα στοιχεία σου</h3>
+    <div id="clues"></div>
+
+    <h3>Κατηγορία</h3>
+    <p class="hint">Διάλεξε ποιον, με τι, και γιατί. Συνεννοήσου με τον συνεργάτη σου — πρέπει να συμφωνήσετε.</p>
+    <p id="partner-guess" class="partner"></p>
+
+    <div class="choice-group"><label>Ύποπτος</label><div id="suspects" class="choices"></div></div>
+    <div class="choice-group"><label>Όπλο</label><div id="weapons" class="choices"></div></div>
+    <div class="choice-group"><label>Κίνητρο</label><div id="motives" class="choices"></div></div>
+
+    <button id="accuse" class="primary" disabled>Κατηγορώ</button>
+
+    <h3>Συνομιλία</h3>
+    <div id="chat-log" class="chat-log"></div>
+    <div class="chat-row">
+      <input id="chat-input" placeholder="Γράψε στον συνεργάτη σου...">
+      <button id="chat-send">▶</button>
+    </div>
+  </section>
+
+  <!-- RESULT -->
+  <section id="screen-result" class="screen hidden">
+    <h2 id="result-msg"></h2>
+    <p id="result-detail"></p>
+    <button id="btn-again" class="primary">Νέο παιχνίδι</button>
+  </section>
+
+  <script type="module" src="/js/game.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
+  </script>
+</body>
+</html>
