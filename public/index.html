@@ -3,80 +3,66 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-  <meta name="theme-color" content="#14101a">
-  <title>Νυχτερινός Φάκελος — Coop Μυστήριο</title>
+  <meta name="theme-color" content="#0e0b14">
+  <title>Καρτορόγκα — Card Dungeon</title>
   <link rel="manifest" href="manifest.webmanifest">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
-  <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 </head>
 <body>
   <button id="mute" aria-label="Ήχος">🔊</button>
 
-  <!-- HOME -->
-  <section id="screen-home" class="screen">
-    <img class="cover" src="assets/cover.jpg" alt="" loading="eager">
-    <h1>🕵️ Νυχτερινός Φάκελος</h1>
-    <p class="tagline">Συνεργατικό μυστήριο για 2 ντετέκτιβ. Ο καθένας βλέπει διαφορετικά στοιχεία — λύστε το μαζί.</p>
-    <label class="picker-label" for="case-select">Διάλεξε υπόθεση (ο δημιουργός επιλέγει)</label>
-    <select id="case-select"></select>
-    <button id="btn-create" class="primary">Δημιουργία παιχνιδιού</button>
-    <div class="divider">ή</div>
-    <div class="join-row">
-      <input id="join-code" inputmode="numeric" pattern="[0-9]*" maxlength="6" placeholder="6ψήφιος κωδικός">
-      <button id="btn-join">Σύνδεση</button>
+  <!-- TITLE -->
+  <section id="screen-title" class="screen">
+    <img class="cover" src="assets/img/cover.jpg" alt="" onerror="this.style.display='none'">
+    <h1>ΚΑΡΤΟΡΟΓΚΑ</h1>
+    <p class="tag">Ένα roguelike dungeon crawler με μάχη καρτών. Κατέβα στο μπουντρούνι, φτιάξε την τράπουλά σου, νίκησε τον Λιτς Άρχοντα.</p>
+    <button id="btn-start" class="primary">Ξεκίνα την περιπέτεια</button>
+  </section>
+
+  <!-- MAP -->
+  <section id="screen-map" class="screen hidden">
+    <div class="topbar"><span id="map-hp">❤️</span><b>Μπουντρούνι</b><span id="map-deck">🃏</span></div>
+    <div id="map-rooms" class="rooms"></div>
+  </section>
+
+  <!-- COMBAT -->
+  <section id="screen-combat" class="screen hidden">
+    <div id="enemies" class="enemies"></div>
+    <div id="player-stats" class="player-stats"></div>
+    <div class="combat-bar">
+      <span class="pile">🂠 <i id="draw-count">0</i></span>
+      <button id="end-turn" class="primary">Τέλος γύρου</button>
+      <span class="pile">🗑 <i id="discard-count">0</i></span>
     </div>
-    <p id="join-error" class="error"></p>
+    <div id="hand" class="hand"></div>
   </section>
 
-  <!-- LOBBY -->
-  <section id="screen-lobby" class="screen hidden">
-    <h2>Κωδικός παιχνιδιού</h2>
-    <div id="lobby-code" class="code">------</div>
-    <p id="lobby-status">...</p>
+  <!-- REWARD -->
+  <section id="screen-reward" class="screen hidden">
+    <h2 id="reward-title">Νίκη!</h2>
+    <div id="reward-cards" class="card-row"></div>
   </section>
 
-  <!-- GAME -->
-  <section id="screen-game" class="screen hidden">
-    <h2 id="case-title"></h2>
-    <p id="case-intro" class="intro"></p>
-
-    <h3>Φάκελοι υπόπτων</h3>
-    <div id="dossiers"></div>
-
-    <h3>Τα στοιχεία σου</h3>
-    <div id="clues"></div>
-
-    <h3>Κοινά στοιχεία</h3>
-    <div id="shared"></div>
-
-    <h3>Κατηγορία</h3>
-    <p class="hint">Διάλεξε ποιον, με τι, και γιατί. Συνεννοήσου με τον συνεργάτη σου — πρέπει να συμφωνήσετε.</p>
-    <p id="partner-guess" class="partner"></p>
-
-    <div class="choice-group"><label>Ύποπτος</label><div id="suspects" class="choices"></div></div>
-    <div class="choice-group"><label>Όπλο</label><div id="weapons" class="choices"></div></div>
-    <div class="choice-group"><label>Κίνητρο</label><div id="motives" class="choices"></div></div>
-
-    <button id="accuse" class="primary" disabled>Κατηγορώ</button>
-
-    <h3>Συνομιλία</h3>
-    <div id="chat-log" class="chat-log"></div>
-    <div class="chat-row">
-      <input id="chat-input" placeholder="Γράψε στον συνεργάτη σου...">
-      <button id="chat-send">▶</button>
-    </div>
+  <!-- EVENT (rest / treasure) -->
+  <section id="screen-event" class="screen hidden">
+    <div id="event-icon" class="event-icon">🔥</div>
+    <h2 id="event-title"></h2>
+    <p id="event-text" class="tag"></p>
+    <div id="event-cards" class="card-row"></div>
+    <button id="event-continue" class="primary">Συνέχεια</button>
   </section>
 
-  <!-- RESULT -->
-  <section id="screen-result" class="screen hidden">
-    <h2 id="result-msg"></h2>
-    <p id="result-detail"></p>
-    <p id="result-epilogue" class="epilogue"></p>
-    <button id="result-retry" class="primary hidden">Πίσω στην έρευνα</button>
-    <button id="btn-again" class="primary hidden">Νέο παιχνίδι</button>
+  <!-- END -->
+  <section id="screen-end" class="screen hidden">
+    <div id="end-emoji" class="event-icon">☠️</div>
+    <h2 id="end-title"></h2>
+    <p id="end-text" class="tag"></p>
+    <button id="btn-restart" class="primary">Νέα περιπέτεια</button>
   </section>
 
-  <script type="module" src="js/game.js"></script>
+  <script type="module" src="js/app.js"></script>
   <script>
     if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
   </script>

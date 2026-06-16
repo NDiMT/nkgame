@@ -1,81 +1,41 @@
-# 🕵️ Νυχτερινός Φάκελος — Coop Detective Mystery
+# 🃏 Καρτορόγκα — Card Dungeon Crawler
 
-A cooperative detective mystery for **2 players on mobile**. Each detective sees
-only half the clues; they talk over an in-game chat, share evidence objects, and
-jointly accuse a suspect. Connection is **peer-to-peer over WebRTC**, paired with
-a **6-digit code**.
+A **single-player roguelike card-combat dungeon crawler** for mobile, inspired by
+Card Quest / Slay the Spire. Fully static PWA — no backend, no connection, plays
+anywhere. Pixel art generated with **Gemini**, procedural soundtrack via Web Audio.
 
-Built as a **fully static PWA** (no app store, no backend) — signaling runs over
-the **PeerJS public broker**, so it can be hosted as-is on **GitHub Pages**. The
-mystery content (story, clues, art) is produced by AI: **Claude** writes the
-case, **Gemini** draws it.
+## Play
+- **Live (GitHub Pages):** https://ndimt.github.io/nkgame/
+- **Local:** `npm install && npm start` → http://localhost:8080
 
-## Architecture
+## How it plays
+- Descend a dungeon of rooms: **fights, elites, treasure, rest, and a boss**.
+- **Card combat:** each turn you have 3 energy; play attacks/skills/powers from
+  your hand, manage **block**, exploit **Vulnerable/Weak**, then end your turn and
+  the enemies act (their next move is telegraphed).
+- **Deckbuilding:** win fights to add cards; build toward a strategy.
+- **Roguelike:** HP carries between fights; die and the run ends. Beat the Λιτς
+  Άρχοντα to win.
 
+## Structure
 ```
-public/                Fully static PWA (mobile-first, installable)
-  index.html           screens: home / lobby / game / result
-  css/style.css        atmospheric noir UI
-  js/rtc.js            PeerJS connection (6-digit code = room)
-  js/config.js         WebRTC ICE config (STUN; add TURN here)
-  js/audio.js          procedural noir soundtrack (Web Audio)
-  js/game.js           coop detective game logic
-  cases/*.json         pre-generated mysteries + manifest
-  assets/              cover, background + paper textures
-server/signaling.js    static file server for local dev (optional)
-tools/generate-case.js Claude (case JSON) + image provider (art) generator
+public/
+  index.html            screens: title / map / combat / reward / event / end
+  css/style.css         pixel-art dungeon UI (image-rendering: pixelated)
+  js/data.js            cards + enemies (declarative effects)
+  js/engine.js          turn-based combat engine
+  js/app.js             run state, map, screen flow, rendering, input
+  js/audio.js           procedural dungeon soundtrack
+  assets/img/           Gemini pixel art (cards, enemies, cover)
+tools/serve.js          local static server
+tools/generate-art.js   Gemini pixel-art generator
 .github/workflows/pages.yml   deploys public/ to GitHub Pages
 ```
 
-**How a game connects**
-1. Player A taps *Δημιουργία* → PeerJS registers a peer id from a 6-digit code.
-2. Player B enters the code → PeerJS connects to that peer via the public broker.
-3. A P2P `DataConnection` opens; gameplay flows directly between the two phones.
-
-STUN (Google's public servers) is used by default. For reliable connections on
-mobile carrier networks (symmetric NAT), add a **TURN** server in `js/config.js`.
-
-## Run locally
-
+## Regenerate art
 ```bash
-npm start                   # http://localhost:8080
+GEMINI_API_KEY=... npm run gen-art   # writes pixel art into public/assets/img/
 ```
 
-Or any static server (`npx serve public`). Open on two devices/tabs; on a phone,
-"Add to Home Screen" to install the PWA.
-
-## Deploy to GitHub Pages
-
-The included workflow (`.github/workflows/pages.yml`) publishes `public/` on every
-push. In **Settings → Pages**, set the source to **GitHub Actions** (the workflow
-also attempts to auto-enable it). The site serves under
-`https://<owner>.github.io/<repo>/` — all paths are relative so the subpath works.
-Because it's fully static + PeerJS, no server is required.
-
-## Generate a new AI mystery
-
-```bash
-# Full pipeline (Claude + Gemini art):
-ANTHROPIC_API_KEY=... GEMINI_API_KEY=... IMAGE_PROVIDER=gemini \
-  npm run generate-case -- "παγωμένο σαλέ στις Άλπεις"
-
-# No image API — runs the whole flow with placeholder art:
-ANTHROPIC_API_KEY=... IMAGE_PROVIDER=placeholder npm run generate-case
-```
-
-Output: `public/cases/case-<id>.json` + images under `public/cases/img/<id>/`.
-Point `loadCase()` in `public/js/game.js` at the new file to play it.
-
-**Pre-generated vs runtime**: this generator is meant to be run **offline** to
-bake a handful of cases into the app (zero gameplay cost/latency, GDPR-clean).
-Runtime per-session generation (infinite mysteries) can be added later by calling
-the generator from the server on demand.
-
-## Status (skeleton)
-
-Working: P2P connection via 6-digit code, asymmetric clue split, shared
-suspects/weapons/motives, in-game chat, joint accusation + win/lose, sample case,
-AI generator with swappable image provider.
-
-Next: TURN setup for production, a case picker UI, optional per-suspect/weapon
-art, reconnection handling, and (optional) runtime mystery generation.
+Add cards/enemies in `js/data.js` (and a prompt in `tools/generate-art.js`), then
+re-run the generator.
