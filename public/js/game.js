@@ -23,7 +23,7 @@ export class Game {
     this.wallH = 70; this.wallY = this.H - this.wallH;       // top edge of the wall
     this.gateX = this.W / 2;
     this.wall = { hp: 800, maxHp: 800 };
-    this.turrets = [{ x: this.gateX, main: true, dmg: 9, rate: 0.68, range: 600, t: 0, lvl: 1 }];
+    this.turrets = [{ x: this.gateX, main: true, dmg: 9, rate: 0.68, range: 300, t: 0, lvl: 1 }];
     this.t = 0; this.level = 1; this.xp = 0; this.xpNext = 5; this.kills = 0; this.gold = 0;
     this.enemies = []; this.shots = []; this.fx = [];
     this.spawnT = 0; this.bossT = 80;
@@ -33,10 +33,10 @@ export class Game {
   resize() { const d = this.dpr(); this.cv.width = innerWidth * d; this.cv.height = innerHeight * d; this.cv.style.width = innerWidth + 'px'; this.cv.style.height = innerHeight + 'px'; this.ctx.setTransform(d, 0, 0, d, 0, 0); this.ctx.imageSmoothingEnabled = false; this.W = innerWidth; this.H = innerHeight; this.wallY = this.H - this.wallH; this.gateX = this.W / 2; if (this.turrets) this.layoutTurrets(); }
   setAim(x, y) { this.aim = (x == null) ? null : { x, y }; }
 
-  layoutTurrets() { // spread non-main turrets along the wall
-    const ts = this.turrets.filter(t => !t.main); const n = ts.length;
-    ts.forEach((t, i) => { t.x = this.W * ((i + 1) / (n + 1)); });
+  layoutTurrets() { // main cannon at the gate; extra turrets alternate L, R, L, R…
     const main = this.turrets.find(t => t.main); if (main) main.x = this.gateX;
+    const ts = this.turrets.filter(t => !t.main);
+    ts.forEach((t, k) => { const side = k % 2 === 0 ? -1 : 1; const tier = Math.floor(k / 2); let x = this.gateX + side * (110 + tier * 110); t.x = Math.max(36, Math.min(this.W - 36, x)); });
   }
 
   spawn() {
@@ -112,7 +112,7 @@ export class Game {
     return out;
   }
   applyUpgrade(id) {
-    if (id === 'turret') { this.turrets.push({ x: 0, dmg: 6, rate: 1, range: 520, t: 0, lvl: 1 }); this.layoutTurrets(); }
+    if (id === 'turret') { this.turrets.push({ x: 0, dmg: 6, rate: 1, range: 260, t: 0, lvl: 1 }); this.layoutTurrets(); }
     else if (id === 'power') this.passive.dmg *= 1.25;
     else if (id === 'rapid') this.passive.rate *= 1.2;
     else if (id === 'range') this.passive.range *= 1.25;
@@ -147,7 +147,9 @@ export class Game {
     for (let x = 0; x < W; x += 40) { ctx.fillRect(x, wy + 10, 2, this.wallH); }
     // gate
     const gw = 64; ctx.fillStyle = '#241a12'; ctx.fillRect(this.gateX - gw / 2, wy + 12, gw, this.wallH); ctx.fillStyle = '#3a2a1a'; ctx.fillRect(this.gateX - gw / 2 + 4, wy + 16, gw - 8, this.wallH);
-    // turrets on the wall
+    // turret range rings (subtle) + turrets on the wall
+    ctx.strokeStyle = 'rgba(201,162,63,0.10)'; ctx.lineWidth = 1;
+    for (const tr of this.turrets) { ctx.beginPath(); ctx.arc(tr.x, wy - 6, tr.range * this.passive.range, 0, TAU); ctx.stroke(); }
     for (const tr of this.turrets) this.drawSprite('turret', tr.x, wy - 4, tr.main ? 1.25 : 1);
     // gate cannon barrel toward aim
     const main = this.turrets.find(t => t.main); if (main) { const tgt = this.aim || this.nearest(main.x, wy, 9999) || { x: main.x, y: wy - 60 }; const a = Math.atan2(tgt.y - (wy - 6), tgt.x - main.x); ctx.save(); ctx.translate(main.x, wy - 8); ctx.rotate(a); ctx.fillStyle = '#3a3a44'; ctx.fillRect(0, -4, 26, 8); ctx.fillStyle = '#1a1a22'; ctx.fillRect(22, -5, 5, 10); ctx.restore(); }
