@@ -146,9 +146,9 @@ export const BAGS = {
 
 // ---- Enemies (multi, armor, dodge, distant, intents, player debuffs) ------
 export const ENEMIES = {
-  slime:   { id:'slime', name:'Slime', img:'enemy_goblin', hp:[7,9],
+  slime:   { id:'slime', name:'Slime', img:'enemy_slime', hp:[7,9],
     moves:[{type:'attack',hits:[3]},{type:'attack',hits:[2,2]}] },
-  mage:    { id:'mage', name:'Dark Mage', img:'enemy_lich', hp:[15,18], distant:true,
+  mage:    { id:'mage', name:'Dark Mage', img:'enemy_mage', hp:[15,18], distant:true,
     moves:[{type:'attack',hits:[6]},{type:'attack_status',hits:[3],status:'weak',amount:2},{type:'attack_status',hits:[4],status:'poison',amount:3}] },
   goblin:  { id:'goblin', name:'Goblin', img:'enemy_goblin', hp:[12,15], dodge:1,
     moves:[{type:'attack',hits:[5]},{type:'attack',hits:[3,3]}] },
