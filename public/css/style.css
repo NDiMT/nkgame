@@ -220,6 +220,26 @@ h2 { font-family: 'Press Start 2P', monospace; font-size: 1rem; line-height: 1.5
 .cdesc { background: rgba(0,0,0,0.35); border-radius: 4px; padding: 4px 5px; width: 100%; }
 .card .cost { box-shadow: 0 2px 0 #000; }
 
+/* loadout screen */
+.cstat { font-size: 0.72rem; color: var(--gold); margin-top: 4px; }
+#screen-loadout { overflow-y: auto; }
+.loadout { width: 100%; }
+.loadout-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 6px; }
+.loadcard { flex: 1 1 140px; text-align: left; background: var(--panel); border: 2px solid #000; border-top: 3px solid #3a2f4d; border-radius: 8px; padding: 8px 10px; color: var(--ink); cursor: pointer; }
+.loadcard b { color: var(--gold); font-size: 0.85rem; display: block; }
+.loadcard small { color: var(--muted); font-size: 0.74rem; line-height: 1.35; }
+.loadcard.selected { border-top-color: var(--gold); box-shadow: 0 0 0 2px var(--gold); }
+#loadout-start:disabled { opacity: 0.4; }
+
+/* combat extras */
+.enemy.target { box-shadow: 0 0 0 3px var(--gold), 0 0 16px rgba(227,194,105,0.6); }
+.intent.stun { background: #333; color: #ddd; }
+.intent.buf { background: #13243a; color: #9bc2ff; }
+.card .rng { position: absolute; top: -8px; right: -6px; font-size: 0.8rem; background: #13243a; border: 2px solid #000; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; }
+.badge.arm { background: #444; } .badge.vul { background: #5e2535; } .badge.wk { background: #25505e; }
+.badge.dist { background: #2a3a16; } .badge.arc { background: #3a2a6a; } .badge.blk { background: #25405e; }
+.badge.cmb { background: #5a4a12; } .badge.dge { background: #1c4a52; } .badge.psn { background: #2f5e25; }
+
 /* EVENT / END */
-#screen-event, #screen-end, #screen-reward { justify-content: center; text-align: center; align-items: center; }
+#screen-event, #screen-end { justify-content: center; text-align: center; align-items: center; }
 .event-icon { font-size: 4rem; }

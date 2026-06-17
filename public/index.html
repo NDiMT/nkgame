@@ -17,7 +17,7 @@
   <section id="screen-title" class="screen">
     <img class="cover" src="assets/img/cover.jpg" alt="" onerror="this.style.display='none'">
     <h1>DUNGEON CARDS</h1>
-    <p class="tag">A roguelike card dungeon crawler. Chain attacks for combos, answer enemy strikes in the defense phase, grow your deck with equipment, and slay the Lich Lord.</p>
+    <p class="tag">A tactical roguelite card crawler. One energy pool for attack AND defense, multiple enemies, statuses & distance. Pick a class, build a loadout, beat the dungeon.</p>
     <button id="btn-start" class="primary">Start adventure</button>
   </section>
 
@@ -27,10 +27,11 @@
     <div id="class-cards" class="class-cards"></div>
   </section>
 
-  <!-- SPEC SELECT -->
-  <section id="screen-spec" class="screen hidden">
-    <h2 id="spec-title">Choose a specialization</h2>
-    <div id="spec-cards" class="class-cards"></div>
+  <!-- LOADOUT -->
+  <section id="screen-loadout" class="screen hidden">
+    <h2 id="loadout-title">Build your loadout</h2>
+    <div id="loadout-body" class="loadout"></div>
+    <button id="loadout-start" class="primary">Enter the dungeon</button>
   </section>
 
   <!-- MAP -->
@@ -41,22 +42,15 @@
 
   <!-- COMBAT -->
   <section id="screen-combat" class="screen hidden">
-    <div id="phase-banner" class="phase-banner atk"></div>
     <div id="enemy-area" class="enemy-area"></div>
     <div id="player-stats" class="player-stats"></div>
     <div class="combat-bar">
       <span class="pile">🂠 <i id="draw-count">0</i></span>
       <button id="mulligan" class="secondary hidden">Mulligan ⟳ (−1⚡)</button>
-      <button id="phase-btn" class="primary">Defend ▶</button>
+      <button id="phase-btn" class="primary">End Turn ▶</button>
       <span class="pile">🗑 <i id="discard-count">0</i></span>
     </div>
     <div id="hand" class="hand"></div>
-  </section>
-
-  <!-- REWARD -->
-  <section id="screen-reward" class="screen hidden">
-    <h2 id="reward-title">Victory!</h2>
-    <div id="reward-cards" class="card-row"></div>
   </section>
 
   <!-- EVENT -->
