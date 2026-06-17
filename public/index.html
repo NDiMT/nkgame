@@ -3,79 +3,58 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-  <meta name="theme-color" content="#0e0b14">
-  <title>Dungeon Cards</title>
+  <meta name="theme-color" content="#0a0710">
+  <title>Castle Survivors</title>
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-  <div id="rotate"><div class="rot-icon">📱↻</div><p>Rotate your device to landscape</p></div>
+  <div id="rotate"><div class="rot-icon">📱↻</div><p>Rotate to landscape</p></div>
+
+  <canvas id="game"></canvas>
+
+  <!-- HUD -->
+  <div id="hud" class="hidden">
+    <div id="xp-bar"><div id="xp-fill"></div></div>
+    <div class="hud-row">
+      <div class="hud-bars">
+        <div class="hb">🏰 <div class="bar2"><div id="castle-fill"></div></div></div>
+        <div class="hb">❤️ <div class="bar2 hp"><div id="hp-fill"></div></div></div>
+      </div>
+      <div id="timer">0:00</div>
+      <div class="hud-right"><span id="lvl">Lv 1</span><span id="kills">☠ 0</span></div>
+    </div>
+  </div>
+
+  <!-- virtual joystick -->
+  <div id="joystick" class="hidden"><div id="joynub"></div></div>
   <button id="mute" aria-label="Sound">🔊</button>
 
   <!-- TITLE -->
-  <section id="screen-title" class="screen">
-    <img class="cover" src="assets/img/cover.jpg" alt="" onerror="this.style.display='none'">
-    <h1>DUNGEON CARDS</h1>
-    <p class="tag">A tactical roguelite card crawler. One energy pool for attack AND defense, multiple enemies, statuses & distance. Pick a class, build a loadout, beat the dungeon.</p>
-    <button id="btn-start" class="primary">Start adventure</button>
+  <section id="screen-title" class="overlay">
+    <img id="cover-img" class="cover" alt="" onerror="this.style.display='none'">
+    <h1>CASTLE<br>SURVIVORS</h1>
+    <p class="tag">Defend the castle from endless hordes. Move to fight, weapons auto-attack, collect XP and level up. How long can you hold?</p>
+    <button id="btn-start" class="primary">Defend!</button>
   </section>
 
-  <!-- CLASS SELECT -->
-  <section id="screen-class" class="screen hidden">
-    <h2>Choose your hero</h2>
-    <div id="class-cards" class="class-cards"></div>
+  <!-- LEVEL UP -->
+  <section id="levelup" class="overlay hidden">
+    <h2>LEVEL UP</h2>
+    <div id="lu-cards" class="lu-cards"></div>
   </section>
 
-  <!-- LOADOUT -->
-  <section id="screen-loadout" class="screen hidden">
-    <h2 id="loadout-title">Build your loadout</h2>
-    <div id="loadout-body" class="loadout"></div>
-    <button id="loadout-start" class="primary">Enter the dungeon</button>
-  </section>
-
-  <!-- MAP -->
-  <section id="screen-map" class="screen hidden">
-    <div class="topbar"><span id="map-hp">❤️</span><span id="map-gold">🪙</span><span id="map-deck">🃏</span></div>
-    <div id="map-rooms" class="rooms"></div>
-  </section>
-
-  <!-- COMBAT -->
-  <section id="screen-combat" class="screen hidden">
-    <div id="enemy-area" class="enemy-area"></div>
-    <div id="player-stats" class="player-stats"></div>
-    <div class="combat-bar">
-      <span class="pile">🂠 <i id="draw-count">0</i></span>
-      <button id="bag" class="secondary hidden">Bag</button>
-      <button id="mulligan" class="secondary hidden">Mulligan ⟳</button>
-      <button id="phase-btn" class="primary">End Turn ▶</button>
-      <span class="pile">🗑 <i id="discard-count">0</i></span>
-    </div>
-    <div id="hand" class="hand"></div>
-  </section>
-
-  <!-- EVENT -->
-  <section id="screen-event" class="screen hidden">
-    <div id="event-icon" class="event-icon">🔥</div>
-    <h2 id="event-title"></h2>
-    <p id="event-text" class="tag"></p>
-    <div id="event-cards" class="card-row"></div>
-    <button id="event-continue" class="primary">Continue</button>
-  </section>
-
-  <!-- END -->
-  <section id="screen-end" class="screen hidden">
-    <div id="end-emoji" class="event-icon">☠️</div>
-    <h2 id="end-title"></h2>
-    <p id="end-text" class="tag"></p>
-    <button id="btn-restart" class="primary">New adventure</button>
+  <!-- GAME OVER -->
+  <section id="gameover" class="overlay hidden">
+    <h2>THE CASTLE HAS FALLEN</h2>
+    <p id="go-stats" class="tag"></p>
+    <button id="btn-again" class="primary">Defend again</button>
   </section>
 
   <div id="crt"></div>
-  <script type="module" src="js/app.js"></script>
-  <script>
-    if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
-  </script>
+  <script type="module" src="js/main.js"></script>
+  <script>if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});</script>
 </body>
 </html>

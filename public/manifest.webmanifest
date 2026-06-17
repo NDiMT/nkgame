@@ -1,13 +1,1 @@
-{
-  "name": "Καρτορόγκα",
-  "short_name": "Καρτορόγκα",
-  "description": "Roguelike card dungeon crawler.",
-  "start_url": ".",
-  "display": "standalone",
-  "orientation": "landscape",
-  "background_color": "#0e0b14",
-  "theme_color": "#0e0b14",
-  "icons": [
-    { "src": "assets/img/cover.jpg", "sizes": "512x512", "type": "image/jpeg", "purpose": "any" }
-  ]
-}
+{ "name":"Castle Survivors","short_name":"Castle","start_url":".","display":"standalone","orientation":"landscape","background_color":"#0a0710","theme_color":"#0a0710","icons":[{"src":"assets/cover.jpg","sizes":"384x256","type":"image/jpeg"}] }
