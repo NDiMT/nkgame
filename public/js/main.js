@@ -14,11 +14,6 @@ function loadAssets() {
 }
 function load(A, key, src) { return new Promise((res) => { const im = new Image(); im.onload = () => { A[key] = im; res(); }; im.onerror = () => res(); im.src = src; }); }
 
-async function lockLandscape() {
-  try { if (document.documentElement.requestFullscreen) await document.documentElement.requestFullscreen(); } catch {}
-  try { if (screen.orientation && screen.orientation.lock) await screen.orientation.lock('landscape'); } catch {}
-}
-
 let game, assets, last = 0, raf = 0;
 
 function loop(ts) {
@@ -86,7 +81,7 @@ async function boot() {
   addEventListener('resize', () => game.resize());
   initInput();
   $('#cover-img').src = 'assets/cover.jpg';
-  $('#btn-start').onclick = async () => { music.start(); await lockLandscape(); startGame(); };
+  $('#btn-start').onclick = () => { music.start(); startGame(); };
   $('#btn-again').onclick = () => startGame();
   $('#mute').onclick = () => { $('#mute').textContent = music.toggle() ? '🔊' : '🔇'; };
 }
