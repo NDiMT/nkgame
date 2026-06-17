@@ -72,7 +72,7 @@ export class Game {
       if (tr.main && this.aim) { target = { x: this.aim.x, y: this.aim.y }; }
       else target = this.nearest(tx, ty, tr.range * this.passive.range);
       if (!target) continue;
-      const shots = 1 + (tr.main ? this.passive.count : 0);
+      const shots = 1 + this.passive.count; // every turret gets the multishot upgrade
       for (let i = 0; i < shots; i++) {
         const spread = (i - (shots - 1) / 2) * 0.12;
         this.shoot(tx, ty, target, tr.dmg * this.passive.dmg, spread);
@@ -154,8 +154,16 @@ export class Game {
     // brown wooden base under each extra turret (matches the gate)
     for (const tr of this.turrets) { if (tr.main) continue; ctx.fillStyle = '#241a12'; ctx.fillRect(tr.x - 17, wy + 10, 34, this.wallH); ctx.fillStyle = '#3a2a1a'; ctx.fillRect(tr.x - 13, wy + 14, 26, this.wallH); }
     for (const tr of this.turrets) this.drawSprite('turret', tr.x, wy - 4, tr.main ? 1.25 : 1);
-    // gate cannon barrel toward aim
-    const main = this.turrets.find(t => t.main); if (main) { const tgt = this.aim || this.nearest(main.x, wy, 9999) || { x: main.x, y: wy - 60 }; const a = Math.atan2(tgt.y - (wy - 6), tgt.x - main.x); ctx.save(); ctx.translate(main.x, wy - 8); ctx.rotate(a); ctx.fillStyle = '#3a3a44'; ctx.fillRect(0, -4, 26, 8); ctx.fillStyle = '#1a1a22'; ctx.fillRect(22, -5, 5, 10); ctx.restore(); }
+    // every turret has a barrel that aims at its target
+    for (const tr of this.turrets) {
+      const tgt = (tr.main && this.aim) ? this.aim : this.nearest(tr.x, wy, tr.range * this.passive.range);
+      const a = tgt ? Math.atan2(tgt.y - (wy - 8), tgt.x - tr.x) : -Math.PI / 2;
+      const len = tr.main ? 26 : 22;
+      ctx.save(); ctx.translate(tr.x, wy - 8); ctx.rotate(a);
+      ctx.fillStyle = '#3a3a44'; ctx.fillRect(0, -4, len, 8);
+      ctx.fillStyle = '#1a1a22'; ctx.fillRect(len - 4, -5, 5, 10);
+      ctx.restore();
+    }
     // aim reticle
     if (this.aim) { ctx.strokeStyle = 'rgba(201,162,63,0.8)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(this.aim.x, this.aim.y, 12, 0, TAU); ctx.moveTo(this.aim.x - 18, this.aim.y); ctx.lineTo(this.aim.x + 18, this.aim.y); ctx.moveTo(this.aim.x, this.aim.y - 18); ctx.lineTo(this.aim.x, this.aim.y + 18); ctx.stroke(); }
 
