@@ -243,3 +243,50 @@ h2 { font-family: 'Press Start 2P', monospace; font-size: 1rem; line-height: 1.5
 /* EVENT / END */
 #screen-event, #screen-end { justify-content: center; text-align: center; align-items: center; }
 .event-icon { font-size: 4rem; }
+
+/* ===================== FULL PIXEL UI PASS ===================== */
+img { image-rendering: pixelated; }
+body { background-color: var(--bg); background-image: repeating-linear-gradient(0deg, rgba(255,255,255,0.025) 0 1px, transparent 1px 3px); }
+
+/* flatten gradients, hard pixel borders + offset shadows, sharp corners */
+.primary { background: var(--gold) !important; color:#2a1d05; border: 3px solid #000 !important; border-radius: 0 !important; box-shadow: 0 4px 0 #5e4a14 !important; }
+.primary:active { transform: translateY(4px); box-shadow: 0 0 0 #5e4a14 !important; }
+.secondary { background: var(--panel-2) !important; border: 3px solid #000 !important; border-radius: 0 !important; box-shadow: 0 3px 0 #000 !important; }
+.secondary:active { transform: translateY(3px); box-shadow: 0 0 0 #000 !important; }
+
+.card, .loadcard, .player-stats, .enemy, .topbar, .chat-log, .intro, .code, .cstat, select, input, .modal-card {
+  border-radius: 0 !important; }
+.card { background: #1c1530 !important; border: 3px solid #000 !important; box-shadow: 0 3px 0 #000 !important; }
+.card-art, .enemy-art, .hero-portrait, .cover, .node-icon, .class-art { image-rendering: pixelated; }
+.card-art { border: 2px solid #000 !important; border-radius: 0 !important; }
+.player-stats, .topbar, .chat-log { background: #160f22 !important; border: 3px solid #000 !important; box-shadow: 0 3px 0 #000 !important; }
+.intro { background: #160f22 !important; border-left: 4px solid var(--accent) !important; }
+.enemy { background: #160f22 !important; border: 3px solid #000 !important; border-radius: 0 !important; }
+.enemy.target { box-shadow: 0 0 0 3px var(--gold) !important; }
+
+/* blocky bars */
+.bar { border: 2px solid #000 !important; border-radius: 0 !important; height: 14px; background: #000 !important; }
+.bar span { border-radius: 0 !important; }
+.bar em { font-family: 'Press Start 2P', monospace; font-size: 0.5rem; line-height: 14px; }
+
+/* badges + chips: sharp */
+.badge, .intent, .energy, .pile, .cost { border-radius: 0 !important; }
+.badge { border: 2px solid #000; }
+.intent { border: 2px solid #000; }
+
+/* nodes: sharp pixel tiles */
+.node { border-radius: 0 !important; box-shadow: 0 3px 0 #000; }
+.node.boss { border-radius: 0 !important; }
+
+/* cover: pixel frame */
+.cover { border: 3px solid #000 !important; box-shadow: 0 0 0 3px var(--gold), 0 6px 0 #000 !important; border-radius: 0 !important; }
+
+/* hero portrait + class art framed */
+.hero-portrait, .class-art { border: 3px solid #000 !important; border-radius: 0 !important; }
+
+/* mute button */
+#mute { border-radius: 0 !important; border: 3px solid #000 !important; box-shadow: 0 3px 0 #000; }
+/* multi-enemy layout */
+.enemy-area { flex-wrap: wrap; gap: 8px; align-items: flex-start; }
+.enemy-area .enemy { width: 140px; }
+.enemy-area .enemy-art { width: 88px; height: 88px; }
