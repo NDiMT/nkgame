@@ -1,13 +1,19 @@
 // Dungeon Cards — loadout-based roguelite card crawler (Card Quest model).
-import { CARDS, CLASSES, LOADOUT, ENEMIES, COMMON_ENEMIES } from './data.js';
-import { createCombat, playCard, canPlay, endTurn, canMulligan, mulligan, setTarget } from './engine.js';
+import { CARDS, CLASSES, LOADOUT, BAGS, ENEMIES, COMMON_ENEMIES, ELITE_GROUPS } from './data.js';
+import { createCombat, playCard, canPlay, endTurn, canMulligan, mulligan, setTarget, canUseBag, useBag } from './engine.js';
 import { Soundtrack } from './audio.js';
 
 const $ = (s) => document.querySelector(s);
 const screens = {};
 const music = new Soundtrack();
 let run = null, combat = null;
-let sel = { classId: null, subclass: null, weapon: null, trinket: null }; // loadout in progress
+let sel = { classId: null, subclass: null, weapon: null, trinket: null, bag: null }; // loadout in progress
+const SLOTS = ['subclass', 'weapon', 'trinket', 'bag'];
+function slotOptions(classId, slot) {
+  const L = LOADOUT[classId];
+  if (slot === 'bag') return L.bag.map((id) => ({ id, name: BAGS[id].name, desc: `${BAGS[id].desc} (${BAGS[id].charges} charges)` }));
+  return L[slot];
+}
 
 const sample = (arr, n) => { const p = [...arr]; const o = []; while (o.length < n && p.length) o.push(p.splice(Math.floor(Math.random() * p.length), 1)[0]); return o; };
 const img = (key, cls) => `<img class="${cls}" src="assets/img/${key}.jpg" alt="" loading="lazy" onerror="this.style.display='none'">`;
@@ -19,16 +25,17 @@ function saveUnlocks(u) { try { localStorage.setItem('dc_unlocks', JSON.stringif
 function classUnlocks(classId) {
   const all = loadUnlocks();
   if (!all[classId]) {
-    const L = LOADOUT[classId];
-    all[classId] = { subclass: [L.subclass[0].id], weapon: [L.weapon[0].id], trinket: [L.trinket[0].id] };
+    all[classId] = {};
+    for (const slot of SLOTS) all[classId][slot] = [slotOptions(classId, slot)[0].id];
     saveUnlocks(all);
   }
+  for (const slot of SLOTS) if (!all[classId][slot]) { all[classId][slot] = [slotOptions(classId, slot)[0].id]; saveUnlocks(all); }
   return all[classId];
 }
 function unlockRandom(classId) {
-  const all = loadUnlocks(); const u = all[classId] || classUnlocks(classId); const L = LOADOUT[classId];
+  const all = loadUnlocks(); const u = all[classId] || classUnlocks(classId);
   const locked = [];
-  for (const slot of ['subclass', 'weapon', 'trinket']) for (const piece of L[slot]) if (!u[slot].includes(piece.id)) locked.push({ slot, piece });
+  for (const slot of SLOTS) for (const piece of slotOptions(classId, slot)) if (!u[slot].includes(piece.id)) locked.push({ slot, piece });
   if (!locked.length) return null;
   const pick = locked[Math.floor(Math.random() * locked.length)];
   u[pick.slot].push(pick.piece.id); all[classId] = u; saveUnlocks(all);
@@ -48,53 +55,51 @@ function classSelect() {
   show('class');
 }
 
+const SLOT_LABEL = { subclass: 'Subclass', weapon: 'Weapon', trinket: 'Trinket', bag: 'Bag item' };
 function loadoutScreen() {
   const u = classUnlocks(sel.classId);
-  const L = LOADOUT[sel.classId];
-  const slotHtml = (slot, label) => {
-    const opts = L[slot].filter((p) => u[slot].includes(p.id));
-    return `<h3>${label}</h3><div class="loadout-row" data-slot="${slot}">` + opts.map((p) => `
+  const slotHtml = (slot) => {
+    const opts = slotOptions(sel.classId, slot).filter((p) => u[slot].includes(p.id));
+    if (!sel[slot]) sel[slot] = opts[0].id;
+    return `<h3>${SLOT_LABEL[slot]}</h3><div class="loadout-row" data-slot="${slot}">` + opts.map((p) => `
       <button class="loadcard ${sel[slot] === p.id ? 'selected' : ''}" data-slot="${slot}" data-id="${p.id}">
         <b>${p.name}</b><small>${p.desc}</small></button>`).join('') + `</div>`;
   };
   $('#loadout-title').textContent = `${CLASSES[sel.classId].name} — build your loadout`;
-  $('#loadout-body').innerHTML = slotHtml('subclass', 'Subclass') + slotHtml('weapon', 'Weapon') + slotHtml('trinket', 'Trinket');
+  $('#loadout-body').innerHTML = SLOTS.map(slotHtml).join('');
   $('#loadout-body').querySelectorAll('.loadcard').forEach((b) => (b.onclick = () => {
     sel[b.dataset.slot] = b.dataset.id;
     b.parentElement.querySelectorAll('.loadcard').forEach((x) => x.classList.toggle('selected', x === b));
-    $('#loadout-start').disabled = !(sel.subclass && sel.weapon && sel.trinket);
   }));
-  // preselect first of each
-  for (const slot of ['subclass', 'weapon', 'trinket']) if (!sel[slot]) sel[slot] = L[slot].find((p) => u[slot].includes(p.id)).id;
-  $('#loadout-body').querySelectorAll('.loadcard').forEach((b) => b.classList.toggle('selected', sel[b.dataset.slot] === b.dataset.id));
   $('#loadout-start').disabled = false;
   $('#loadout-start').onclick = startRun;
   show('loadout');
 }
 
-function piece(classId, slot, id) { return LOADOUT[classId][slot].find((p) => p.id === id); }
+function gearPiece(classId, slot, id) { return LOADOUT[classId][slot].find((p) => p.id === id); }
 
 function startRun() {
   const cl = CLASSES[sel.classId];
-  const parts = [piece(sel.classId, 'subclass', sel.subclass), piece(sel.classId, 'weapon', sel.weapon), piece(sel.classId, 'trinket', sel.trinket)];
+  const parts = [gearPiece(sel.classId, 'subclass', sel.subclass), gearPiece(sel.classId, 'weapon', sel.weapon), gearPiece(sel.classId, 'trinket', sel.trinket)];
   const deck = [...cl.base];
   let hp = cl.hp, energy = cl.energy, arcane = cl.arcane;
   for (const p of parts) { deck.push(...p.cards); hp += p.mods.hp || 0; energy += p.mods.energy || 0; arcane += p.mods.arcane || 0; }
-  run = { classId: cl.id, deck, maxHp: hp, hp, maxEnergy: energy, maxArcane: arcane, map: genMap(), curNode: null, visited: new Set() };
+  run = { classId: cl.id, bag: sel.bag, deck, maxHp: hp, hp, maxEnergy: energy, maxArcane: arcane, gold: 0, map: genMap(), curNode: null, visited: new Set() };
   renderMap(); show('map');
 }
 
 // ---- Branching map ---------------------------------------------------------
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
-const ROOM_ICON = { battle: '⚔️', elite: '💀', rest: '🔥', treasure: '🎁', boss: '🐲' };
+const ROOM_ICON = { battle: '⚔️', elite: '💀', rest: '🔥', treasure: '🎁', shop: '🛒', boss: '🐲' };
 function nodeType(r, rows, i) {
   if (r === 0) return 'battle';
   if (r === rows - 1) return 'boss';
   if (r === rows - 2) return i === 0 ? 'rest' : 'battle';
   const x = Math.random();
   if (r >= 3 && x < 0.14) return 'elite';
-  if (x < 0.28) return 'treasure';
-  if (x < 0.42) return 'rest';
+  if (x < 0.22) return 'treasure';
+  if (x < 0.34) return 'shop';
+  if (x < 0.48) return 'rest';
   return 'battle';
 }
 function genMap() {
@@ -105,8 +110,10 @@ function genMap() {
     for (let i = 0; i < count; i++) {
       const type = nodeType(r, ROWS, i);
       const node = { row: r, i, type, next: [] };
-      if (type === 'battle') node.enemies = sample(COMMON_ENEMIES, 1 + (Math.random() < 0.6 ? 1 : 0) + (Math.random() < 0.25 ? 1 : 0));
-      else if (type === 'elite') node.enemies = Math.random() < 0.5 ? ['orc'] : ['orc', 'goblin'];
+      if (type === 'battle') {
+        node.enemies = sample(COMMON_ENEMIES, 1 + (Math.random() < 0.6 ? 1 : 0) + (Math.random() < 0.25 ? 1 : 0));
+        if (r >= 2 && Math.random() < 0.25) node.ambush = sample(COMMON_ENEMIES, 1);
+      } else if (type === 'elite') node.enemies = ELITE_GROUPS[Math.floor(Math.random() * ELITE_GROUPS.length)];
       else if (type === 'boss') node.enemies = ['lich'];
       row.push(node);
     }
@@ -131,6 +138,7 @@ function availableNodes() {
 }
 function renderMap() {
   $('#map-hp').textContent = `❤️ ${run.hp}/${run.maxHp}`;
+  $('#map-gold').textContent = `🪙 ${run.gold}`;
   $('#map-deck').textContent = `🃏 ${run.deck.length}`;
   const avail = new Set(availableNodes().map((n) => `${n.row}-${n.i}`));
   const cont = $('#map-rooms');
@@ -153,11 +161,12 @@ function enterRoom(node) {
   run.curNode = node; run.visited.add(`${node.row}-${node.i}`);
   if (node.type === 'rest') return restRoom();
   if (node.type === 'treasure') return treasureRoom();
-  startCombat(node.enemies, node.type);
+  if (node.type === 'shop') return shopRoom();
+  startCombat(node.enemies, node.type, node.ambush || []);
 }
 
 // ---- Combat ----------------------------------------------------------------
-function startCombat(enemyIds, roomType) { combat = createCombat(run, enemyIds); combat.roomType = roomType; renderCombat(); show('combat'); }
+function startCombat(enemyIds, roomType, ambush = []) { combat = createCombat(run, enemyIds, ambush); combat.roomType = roomType; renderCombat(); show('combat'); }
 function bar(cur, max) { const pct = Math.max(0, Math.round((cur / max) * 100)); return `<div class="bar"><span style="width:${pct}%"></span><em>${Math.max(0, cur)}/${max}</em></div>`; }
 function intentLabel(e) {
   if (e.stun > 0) return `<span class="intent stun">💫 stun</span>`;
@@ -198,11 +207,16 @@ function renderCombat() {
         ${c.chain > 0 ? `<span class="badge cmb">🔗${c.chain}</span>` : ''}
         ${p.block > 0 ? `<span class="badge blk">🛡${p.block}</span>` : ''}
         ${p.dodge > 0 ? `<span class="badge dge">💨${p.dodge}</span>` : ''}
+        ${p.poison > 0 ? `<span class="badge psn">☠${p.poison}</span>` : ''}
+        ${p.weak > 0 ? `<span class="badge wk">💧${p.weak}</span>` : ''}
       </div>
     </div>`;
 
   const mul = $('#mulligan');
   if (canMulligan(c)) { mul.classList.remove('hidden'); mul.onclick = () => { mulligan(c); renderCombat(); }; } else mul.classList.add('hidden');
+  const bagBtn = $('#bag');
+  if (c.bag) { bagBtn.classList.remove('hidden'); bagBtn.textContent = `${c.bag.name} (${c.bagCharges})`; bagBtn.disabled = !canUseBag(c); bagBtn.onclick = () => { useBag(c); renderCombat(); }; }
+  else bagBtn.classList.add('hidden');
   $('#phase-btn').textContent = 'End Turn ▶';
   $('#phase-btn').onclick = () => { endTurn(c); renderCombat(); };
 
@@ -223,14 +237,39 @@ function endCombat() {
   if (!combat.won) return gameOver();
   run.hp = combat.player.hp;
   const t = combat.roomType;
+  const gold = (t === 'boss' ? 40 : t === 'elite' ? 22 : 8) + Math.floor(Math.random() * 6);
+  run.gold += gold;
   if (t === 'boss') { unlockRandom(run.classId); return victory(); }
   const heal = t === 'elite' ? 12 : 5;
   run.hp = Math.min(run.maxHp, run.hp + heal);
-  let msg = `Victory! +${heal} HP.`;
+  let msg = `Victory! +${heal} HP, +${gold} 🪙.`;
   if (t === 'elite') { const u = unlockRandom(run.classId); if (u) msg += ` Unlocked: ${u}!`; }
   $('#event-icon').textContent = '⚔️'; $('#event-title').textContent = 'Battle won';
   $('#event-text').textContent = msg; $('#event-cards').innerHTML = '';
   $('#event-continue').classList.remove('hidden'); show('event');
+}
+
+// ---- Shop ------------------------------------------------------------------
+function shopRoom() {
+  const offers = [
+    { name: 'Heal 25 HP', cost: 25, act: () => { run.hp = Math.min(run.maxHp, run.hp + 25); } },
+    { name: '+8 Max HP', cost: 35, act: () => { run.maxHp += 8; run.hp += 8; } },
+    { name: 'Unlock gear', cost: 45, act: () => { const u = unlockRandom(run.classId); return u ? `Unlocked ${u}` : 'All gear already unlocked'; } },
+  ];
+  $('#event-icon').textContent = '🛒'; $('#event-title').textContent = 'Shop';
+  $('#event-text').textContent = `You have 🪙 ${run.gold}. Spend wisely.`;
+  $('#event-cards').innerHTML = offers.map((o, i) => `<button class="loadcard buy" data-i="${i}" ${run.gold < o.cost ? 'disabled' : ''}><b>${o.name}</b><small>🪙 ${o.cost}</small></button>`).join('');
+  $('#event-cards').querySelectorAll('.buy').forEach((b) => (b.onclick = () => {
+    const o = offers[+b.dataset.i];
+    if (run.gold < o.cost) return;
+    run.gold -= o.cost; const r = o.act();
+    $('#event-text').textContent = `${r || 'Done'}. 🪙 ${run.gold} left.`;
+    shopRefresh(offers);
+  }));
+  $('#event-continue').classList.remove('hidden'); show('event');
+}
+function shopRefresh(offers) {
+  $('#event-cards').querySelectorAll('.buy').forEach((b) => { b.disabled = run.gold < offers[+b.dataset.i].cost; });
 }
 
 // ---- Events ----------------------------------------------------------------

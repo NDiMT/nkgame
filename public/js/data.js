@@ -83,6 +83,7 @@ export const LOADOUT = {
       { id:'axes', name:'Throwing Axes', desc:'Adds 2× Throwing Axe (ranged).', cards:['throwaxe','throwaxe'], mods:{} },
       { id:'banner', name:'War Banner', desc:'+10 HP. Adds Rally.', cards:['rally'], mods:{hp:10} },
     ],
+    bag: ['flask', 'bomb'],
   },
   wizard: {
     subclass: [
@@ -97,6 +98,7 @@ export const LOADOUT = {
       { id:'orb', name:'Arcane Orb', desc:'+2 max arcane. Adds Arcane Insight.', cards:['insight'], mods:{arcane:2} },
       { id:'robe', name:'Warding Robe', desc:'+10 HP. Adds Magic Shield.', cards:['magicshield'], mods:{hp:10} },
     ],
+    bag: ['manapot', 'firescroll'],
   },
   rogue: {
     subclass: [
@@ -111,6 +113,7 @@ export const LOADOUT = {
       { id:'cloak', name:'Shadow Cloak', desc:'+5 HP. Adds Trick Dodge.', cards:['trickdodge'], mods:{hp:5} },
       { id:'smoke', name:'Smoke Pouch', desc:'Adds 2× Smoke Bomb.', cards:['smokebomb','smokebomb'], mods:{} },
     ],
+    bag: ['poisonvial', 'antidote'],
   },
   hunter: {
     subclass: [
@@ -125,11 +128,28 @@ export const LOADOUT = {
       { id:'quiver', name:'Full Quiver', desc:'+2 max aim. Adds Volley.', cards:['volley'], mods:{arcane:2} },
       { id:'boots', name:'Scout Boots', desc:'+8 HP. Adds Dodge Roll.', cards:['dodgeroll'], mods:{hp:8} },
     ],
+    bag: ['trapbag', 'quiver'],
   },
 };
 
-// ---- Enemies (multi, armor, dodge, distant, intents) ----------------------
+// ---- Bag items (limited charges per battle, free to use) ------------------
+export const BAGS = {
+  flask:     { id:'flask', name:'Healing Flask', desc:'Heal 14.', charges:2, img:'card_brace', effects:[{op:'heal',value:14}] },
+  bomb:      { id:'bomb', name:'Bomb Pouch', desc:'Deal 7 to ALL.', charges:2, img:'card_finisher', effects:[{op:'damageAll',value:7}] },
+  manapot:   { id:'manapot', name:'Mana Potion', desc:'Gain 3 arcane, 2 energy.', charges:2, img:'card_insight', effects:[{op:'arcane',value:3},{op:'energy',value:2}] },
+  firescroll:{ id:'firescroll', name:'Fire Scroll', desc:'Deal 9 to ALL.', charges:1, img:'card_fireball', effects:[{op:'damageAll',value:9}] },
+  poisonvial:{ id:'poisonvial', name:'Poison Vial', desc:'Poison 4 to ALL.', charges:2, img:'card_poisonblade', effects:[{op:'poisonAll',value:4}] },
+  antidote:  { id:'antidote', name:'Antidote', desc:'Cleanse poison/weak, heal 8.', charges:2, img:'card_brace', effects:[{op:'cleanse'},{op:'heal',value:8}] },
+  trapbag:   { id:'trapbag', name:'Trap Kit', desc:'Deal 3 + Stun 1 to ALL.', charges:2, img:'card_trap', effects:[{op:'damageAll',value:3},{op:'stunAll',value:1}] },
+  quiver:    { id:'quiver', name:'Quiver Refill', desc:'Gain 3 aim, draw 2.', charges:2, img:'card_takeaim', effects:[{op:'arcane',value:3},{op:'draw',value:2}] },
+};
+
+// ---- Enemies (multi, armor, dodge, distant, intents, player debuffs) ------
 export const ENEMIES = {
+  slime:   { id:'slime', name:'Slime', img:'enemy_goblin', hp:[7,9],
+    moves:[{type:'attack',hits:[3]},{type:'attack',hits:[2,2]}] },
+  mage:    { id:'mage', name:'Dark Mage', img:'enemy_lich', hp:[15,18], distant:true,
+    moves:[{type:'attack',hits:[6]},{type:'attack_status',hits:[3],status:'weak',amount:2},{type:'attack_status',hits:[4],status:'poison',amount:3}] },
   goblin:  { id:'goblin', name:'Goblin', img:'enemy_goblin', hp:[12,15], dodge:1,
     moves:[{type:'attack',hits:[5]},{type:'attack',hits:[3,3]}] },
   skeleton:{ id:'skeleton', name:'Skeleton', img:'enemy_skeleton', hp:[18,22], armor:4,
@@ -139,6 +159,7 @@ export const ENEMIES = {
   orc:     { id:'orc', name:'Orc Warlord', img:'enemy_orc', hp:[44,50], armor:6, elite:true,
     moves:[{type:'attack',hits:[13]},{type:'attack',hits:[6,6]},{type:'buff',value:8}] },
   lich:    { id:'lich', name:'The Lich Lord', img:'enemy_lich', hp:[90,90], dodge:2, boss:true,
-    moves:[{type:'attack',hits:[18]},{type:'attack',hits:[9,9]},{type:'attack',hits:[6,6,6]}] },
+    moves:[{type:'attack',hits:[18]},{type:'attack',hits:[9,9]},{type:'attack_status',hits:[7],status:'poison',amount:4},{type:'attack',hits:[6,6,6]}] },
 };
-export const COMMON_ENEMIES = ['goblin','skeleton','archer'];
+export const COMMON_ENEMIES = ['goblin','skeleton','archer','slime'];
+export const ELITE_GROUPS = [['orc'],['orc','goblin'],['mage','skeleton'],['mage','archer']];
