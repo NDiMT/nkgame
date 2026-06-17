@@ -33,10 +33,11 @@ export class Game {
   resize() { const d = this.dpr(); this.cv.width = innerWidth * d; this.cv.height = innerHeight * d; this.cv.style.width = innerWidth + 'px'; this.cv.style.height = innerHeight + 'px'; this.ctx.setTransform(d, 0, 0, d, 0, 0); this.ctx.imageSmoothingEnabled = false; this.W = innerWidth; this.H = innerHeight; this.wallY = this.H - this.wallH; this.gateX = this.W / 2; if (this.turrets) this.layoutTurrets(); }
   setAim(x, y) { this.aim = (x == null) ? null : { x, y }; }
 
-  layoutTurrets() { // main cannon at the gate; extra turrets alternate L, R, L, R…
+  layoutTurrets() { // main cannon at the gate; extra turrets go far L, R, L, R…
     const main = this.turrets.find(t => t.main); if (main) main.x = this.gateX;
     const ts = this.turrets.filter(t => !t.main);
-    ts.forEach((t, k) => { const side = k % 2 === 0 ? -1 : 1; const tier = Math.floor(k / 2); let x = this.gateX + side * (110 + tier * 110); t.x = Math.max(36, Math.min(this.W - 36, x)); });
+    const base = this.W * 0.26, step = this.W * 0.18; // well clear of the gate
+    ts.forEach((t, k) => { const side = k % 2 === 0 ? -1 : 1; const tier = Math.floor(k / 2); let x = this.gateX + side * (base + tier * step); t.x = Math.max(40, Math.min(this.W - 40, x)); });
   }
 
   spawn() {
