@@ -24,11 +24,11 @@ function loop(ts) {
 
 function hud(h) {
   $('#xp-fill').style.width = `${Math.min(100, (h.xp / h.xpNext) * 100)}%`;
-  $('#castle-fill').style.width = `${(h.castle / h.castleMax) * 100}%`;
-  $('#hp-fill').style.width = `${(h.hp / h.hpMax) * 100}%`;
+  $('#wall-fill').style.width = `${(h.wall / h.wallMax) * 100}%`;
   const m = Math.floor(h.time / 60), s = Math.floor(h.time % 60);
   $('#timer').textContent = `${m}:${String(s).padStart(2, '0')}`;
   $('#lvl').textContent = `Lv ${h.level}`;
+  $('#gold').textContent = `🪙 ${h.gold}`;
   $('#kills').textContent = `☠ ${h.kills}`;
 }
 
@@ -55,23 +55,13 @@ function startGame() {
   if (!raf) raf = requestAnimationFrame(loop);
 }
 
-// ---- input: drag-anywhere virtual joystick + keyboard ----
+// ---- input: touch/drag to AIM the gate cannon ----
 function initInput() {
-  const cv = $('#game'); const stick = $('#joystick'), nub = $('#joynub');
-  let active = false, ox = 0, oy = 0;
-  const R = 55;
-  const set = (cx, cy) => { let dx = cx - ox, dy = cy - oy; const d = Math.hypot(dx, dy) || 1; const cl = Math.min(d, R); const nx = dx / d, ny = dy / d;
-    nub.style.transform = `translate(${nx * cl}px, ${ny * cl}px)`;
-    const mag = Math.min(1, d / R); game.setMove(nx * mag, ny * mag); };
-  cv.addEventListener('pointerdown', (e) => { active = true; ox = e.clientX; oy = e.clientY; stick.style.left = ox + 'px'; stick.style.top = oy + 'px'; stick.classList.remove('hidden'); set(e.clientX, e.clientY); });
-  cv.addEventListener('pointermove', (e) => { if (active) set(e.clientX, e.clientY); });
-  const end = () => { active = false; stick.classList.add('hidden'); nub.style.transform = 'translate(0,0)'; game.setMove(0, 0); };
+  const cv = $('#game'); let down = false;
+  cv.addEventListener('pointerdown', (e) => { down = true; game.setAim(e.clientX, e.clientY); });
+  cv.addEventListener('pointermove', (e) => { if (down) game.setAim(e.clientX, e.clientY); });
+  const end = () => { down = false; game.setAim(null); };
   cv.addEventListener('pointerup', end); cv.addEventListener('pointercancel', end); cv.addEventListener('pointerleave', end);
-
-  const keys = {};
-  const apply = () => { let x = (keys.d || keys.ArrowRight ? 1 : 0) - (keys.a || keys.ArrowLeft ? 1 : 0); let y = (keys.s || keys.ArrowDown ? 1 : 0) - (keys.w || keys.ArrowUp ? 1 : 0); const d = Math.hypot(x, y) || 1; game.setMove(x / d, y / d); };
-  addEventListener('keydown', (e) => { keys[e.key] = true; apply(); });
-  addEventListener('keyup', (e) => { keys[e.key] = false; apply(); });
 }
 
 async function boot() {
