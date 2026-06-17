@@ -11,8 +11,8 @@ let sel = { classId: null, subclass: null, weapon: null, trinket: null, bag: nul
 const SLOTS = ['subclass', 'weapon', 'trinket', 'bag'];
 function slotOptions(classId, slot) {
   const L = LOADOUT[classId];
-  if (slot === 'bag') return L.bag.map((id) => ({ id, name: BAGS[id].name, desc: `${BAGS[id].desc} (${BAGS[id].charges} charges)` }));
-  return L[slot];
+  if (slot === 'bag') return L.bag.map((id) => ({ id, name: BAGS[id].name, desc: `${BAGS[id].desc} (${BAGS[id].charges} charges)`, img: BAGS[id].img }));
+  return L[slot].map((p) => ({ ...p, img: CARDS[p.cards[0]].img }));
 }
 
 const sample = (arr, n) => { const p = [...arr]; const o = []; while (o.length < n && p.length) o.push(p.splice(Math.floor(Math.random() * p.length), 1)[0]); return o; };
@@ -67,7 +67,7 @@ function loadoutScreen() {
     if (!sel[slot]) sel[slot] = opts[0].id;
     return `<h3>${SLOT_LABEL[slot]}</h3><div class="loadout-row" data-slot="${slot}">` + opts.map((p) => `
       <button class="loadcard ${sel[slot] === p.id ? 'selected' : ''}" data-slot="${slot}" data-id="${p.id}">
-        <b>${p.name}</b><small>${p.desc}</small></button>`).join('') + `</div>`;
+        ${img(p.img, 'load-art')}<span class="lc-text"><b>${p.name}</b><small>${p.desc}</small></span></button>`).join('') + `</div>`;
   };
   $('#loadout-title').textContent = `${CLASSES[sel.classId].name} — build your loadout`;
   $('#loadout-body').innerHTML = SLOTS.map(slotHtml).join('');
@@ -148,7 +148,7 @@ function renderMap() {
   const cont = $('#map-rooms');
   cont.innerHTML = '<svg id="map-edges"></svg>' + run.map.map((row) => `<div class="map-row">${row.map((n) => {
     const id = `${n.row}-${n.i}`; const state = run.visited.has(id) ? 'done' : avail.has(id) ? 'avail' : 'locked';
-    return `<button class="node ${n.type} ${state}" data-row="${n.row}" data-i="${n.i}" ${state === 'avail' ? '' : 'disabled'}><span class="node-icon">${ROOM_ICON[n.type]}</span></button>`;
+    return `<button class="node ${n.type} ${state}" data-row="${n.row}" data-i="${n.i}" ${state === 'avail' ? '' : 'disabled'}><img class="node-img" src="assets/img/node_${n.type}.jpg" alt="" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'node-icon',textContent:'${ROOM_ICON[n.type]}'}))"></button>`;
   }).join('')}</div>`).join('');
   cont.querySelectorAll('.node.avail').forEach((b) => (b.onclick = () => enterRoom(run.map[+b.dataset.row][+b.dataset.i])));
   requestAnimationFrame(drawEdges);

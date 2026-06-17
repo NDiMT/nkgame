@@ -320,3 +320,9 @@ body { background-color: var(--bg); background-image: repeating-linear-gradient(
     repeating-linear-gradient(0deg, rgba(0,0,0,0.18) 0 1px, transparent 1px 3px),
     radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,0.55) 100%);
   mix-blend-mode: multiply; }
+/* loadout + node art */
+.loadcard { display: flex; align-items: center; gap: 8px; }
+.load-art { width: 40px; height: 40px; object-fit: cover; border: 2px solid #000; image-rendering: pixelated; flex: none; }
+.lc-text { display: flex; flex-direction: column; }
+.node { overflow: hidden; padding: 0; }
+.node-img { width: 100%; height: 100%; object-fit: cover; image-rendering: pixelated; }
