@@ -16,10 +16,20 @@ function load(A, key, src) { return new Promise((res) => { const im = new Image(
 
 let game, assets, last = 0, raf = 0;
 
+function showError(msg) {
+  let el = document.getElementById('err');
+  if (!el) { el = document.createElement('div'); el.id = 'err'; el.style.cssText = 'position:fixed;left:0;right:0;bottom:0;z-index:99999;background:#5a0d0d;color:#fff;font:12px/1.4 monospace;padding:10px;white-space:pre-wrap;border-top:3px solid #f55;'; document.body.appendChild(el); }
+  el.textContent = 'ERROR: ' + msg;
+}
+window.addEventListener('error', (e) => showError(`${e.message}  (${(e.filename || '').split('/').pop()}:${e.lineno})`));
+window.addEventListener('unhandledrejection', (e) => showError('promise: ' + ((e.reason && e.reason.message) || e.reason)));
+
 function loop(ts) {
-  raf = requestAnimationFrame(loop);
-  const dt = Math.min(0.05, (ts - last) / 1000 || 0); last = ts;
-  game.update(dt); game.render();
+  try {
+    raf = requestAnimationFrame(loop);
+    const dt = Math.min(0.05, (ts - last) / 1000 || 0); last = ts;
+    game.update(dt); game.render();
+  } catch (err) { cancelAnimationFrame(raf); raf = 0; showError(err.message + '\n' + (err.stack || '').split('\n').slice(1, 3).join('\n')); }
 }
 
 function hud(h) {
@@ -47,12 +57,14 @@ function gameOver(st) {
 }
 
 function startGame() {
-  $('#screen-title').classList.add('hidden');
-  $('#gameover').classList.add('hidden');
-  $('#hud').classList.remove('hidden');
-  game.resize(); game.reset();
-  last = performance.now();
-  if (!raf) raf = requestAnimationFrame(loop);
+  try {
+    $('#screen-title').classList.add('hidden');
+    $('#gameover').classList.add('hidden');
+    $('#hud').classList.remove('hidden');
+    game.resize(); game.reset();
+    last = performance.now();
+    cancelAnimationFrame(raf); raf = requestAnimationFrame(loop);
+  } catch (err) { showError('startGame: ' + err.message + '\n' + (err.stack || '').split('\n')[1]); }
 }
 
 // ---- input: touch/drag to AIM the gate cannon ----
@@ -71,7 +83,7 @@ async function boot() {
   addEventListener('resize', () => game.resize());
   initInput();
   $('#cover-img').src = 'assets/cover.jpg';
-  $('#btn-start').onclick = () => { music.start(); startGame(); };
+  $('#btn-start').onclick = () => { try { music.start(); } catch {} startGame(); };
   $('#btn-again').onclick = () => startGame();
   $('#mute').onclick = () => { $('#mute').textContent = music.toggle() ? '🔊' : '🔇'; };
 }
