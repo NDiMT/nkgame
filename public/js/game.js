@@ -100,8 +100,8 @@ export class Game {
   choices() {
     const pool = [
       { id: 'turret', name: 'Add Turret', icon: 'turret', desc: `Mount another auto-turret on the wall.` },
-      { id: 'power', name: 'Heavy Rounds', icon: 'bolt', desc: '+25% turret damage.' },
-      { id: 'rapid', name: 'Rapid Fire', icon: 'bolt', desc: '+20% fire rate.' },
+      { id: 'power', name: 'Heavy Rounds', icon: 'bolt', desc: '+50% damage (all turrets).' },
+      { id: 'rapid', name: 'Rapid Fire', icon: 'bolt', desc: '+50% fire rate (all turrets).' },
       { id: 'range', name: 'Long Barrels', icon: 'turret', desc: '+25% range.' },
       { id: 'pierce', name: 'AP Rounds', icon: 'bolt', desc: 'Shots pierce +1 enemy.' },
       { id: 'multishot', name: 'Twin Cannon', icon: 'turret', desc: 'Gate cannon fires +1 shot.' },
@@ -114,8 +114,8 @@ export class Game {
   }
   applyUpgrade(id) {
     if (id === 'turret') { const m = this.turrets.find(t => t.main); this.turrets.push({ x: 0, dmg: m.dmg, rate: m.rate, range: m.range, t: 0, lvl: 1 }); this.layoutTurrets(); }
-    else if (id === 'power') this.passive.dmg *= 1.25;
-    else if (id === 'rapid') this.passive.rate *= 1.2;
+    else if (id === 'power') this.passive.dmg *= 1.5;
+    else if (id === 'rapid') this.passive.rate *= 1.5;
     else if (id === 'range') this.passive.range *= 1.25;
     else if (id === 'pierce') this.passive.pierce += 1;
     else if (id === 'multishot') this.passive.count += 1;
