@@ -3,15 +3,15 @@
 // nearest-neighbour via sharp. Run: node tools/pixel-art.js
 import sharp from 'sharp';
 
-const BG = [22, 16, 28];
-// palette
+const BG = [12, 10, 16];
+// palette — darker, muted, Card Quest-like
 const P = {
-  steel:[206,214,228], steelD:[120,130,150], gold:[226,194,105], goldD:[150,120,40],
-  wood:[140,96,52], woodD:[90,60,32], leather:[120,86,52], bone:[228,222,202], boneD:[160,150,120],
-  green:[84,188,92], greenD:[40,120,55], poison:[140,215,95], red:[214,84,72], redD:[120,40,38],
-  fire:[245,150,50], fireC:[255,224,130], arc:[150,110,240], arcC:[205,175,255], cyan:[120,225,255],
-  white:[242,242,250], black:[18,16,24], grey:[150,150,162], greyD:[90,90,104], skin:[222,170,130],
-  purple:[96,70,140], purpleD:[54,38,86], crown:[230,200,90], shadow:[10,8,14],
+  steel:[168,180,198], steelD:[88,98,120], gold:[198,162,72], goldD:[110,84,28],
+  wood:[118,80,44], woodD:[70,46,24], leather:[104,74,46], bone:[200,194,172], boneD:[132,124,100],
+  green:[68,150,78], greenD:[30,86,42], poison:[120,190,86], red:[182,64,56], redD:[96,30,28],
+  fire:[220,124,40], fireC:[244,196,108], arc:[124,90,206], arcC:[176,148,236], cyan:[96,196,234],
+  white:[222,224,234], black:[8,7,12], grey:[118,120,132], greyD:[66,68,80], skin:[198,148,110],
+  purple:[78,56,116], purpleD:[42,28,70], crown:[204,174,74], shadow:[8,6,12],
 };
 
 function C(w = 32, h = 32) { const buf = new Uint8Array(w * h * 4); for (let i = 0; i < w * h; i++) { buf[i*4]=BG[0]; buf[i*4+1]=BG[1]; buf[i*4+2]=BG[2]; buf[i*4+3]=255; } return { w, h, buf }; }
@@ -20,7 +20,27 @@ function rect(c, x, y, w, h, col) { for (let j=0;j<h;j++) for (let i=0;i<w;i++) 
 function ell(c, cx, cy, rx, ry, col) { for (let y=Math.ceil(cy-ry);y<=cy+ry;y++) for (let x=Math.ceil(cx-rx);x<=cx+rx;x++){ const dx=(x-cx)/rx, dy=(y-cy)/ry; if (dx*dx+dy*dy<=1) px(c,x,y,col); } }
 const disc = (c,cx,cy,r,col) => ell(c,cx,cy,r,r,col);
 function line(c, x0, y0, x1, y1, col, t = 1) { x0|=0;y0|=0;x1|=0;y1|=0; const dx=Math.abs(x1-x0), dy=-Math.abs(y1-y0), sx=x0<x1?1:-1, sy=y0<y1?1:-1; let err=dx+dy; for(;;){ disc(c,x0,y0,t/2,col); if(x0===x1&&y0===y1)break; const e2=2*err; if(e2>=dy){err+=dy;x0+=sx;} if(e2<=dx){err+=dx;y0+=sy;} } }
-async function save(c, name) { await sharp(Buffer.from(c.buf), { raw:{width:c.w,height:c.h,channels:4} }).resize(c.w*5, c.h*5, { kernel:'nearest' }).jpeg({ quality:86 }).toFile(`public/assets/img/${name}.jpg`); }
+const isBg = (c, x, y) => { const i=(y*c.w+x)*4; return c.buf[i]===BG[0] && c.buf[i+1]===BG[1] && c.buf[i+2]===BG[2]; };
+// directional shading: highlight the top, shadow the bottom of filled pixels → depth
+function shade(c) {
+  for (let y=0;y<c.h;y++) for (let x=0;x<c.w;x++) {
+    if (isBg(c,x,y)) continue;
+    let f = 1; if (y < c.h*0.30) f = 1.14; else if (y > c.h*0.64) f = 0.78;
+    if (f === 1) continue;
+    const i=(y*c.w+x)*4;
+    c.buf[i]=Math.max(0,Math.min(255,c.buf[i]*f))|0; c.buf[i+1]=Math.max(0,Math.min(255,c.buf[i+1]*f))|0; c.buf[i+2]=Math.max(0,Math.min(255,c.buf[i+2]*f))|0;
+  }
+}
+// crisp black outline around the silhouette (and internal holes) → 90s look
+function outline(c) {
+  const todo=[];
+  for (let y=0;y<c.h;y++) for (let x=0;x<c.w;x++) {
+    if (!isBg(c,x,y)) continue;
+    if ([[1,0],[-1,0],[0,1],[0,-1]].some(([dx,dy])=>{const nx=x+dx,ny=y+dy; return nx>=0&&ny>=0&&nx<c.w&&ny<c.h&&!isBg(c,nx,ny);})) todo.push([x,y]);
+  }
+  for (const [x,y] of todo) px(c,x,y,P.black);
+}
+async function save(c, name) { shade(c); outline(c); await sharp(Buffer.from(c.buf), { raw:{width:c.w,height:c.h,channels:4} }).resize(c.w*6, c.h*6, { kernel:'nearest' }).jpeg({ quality:88 }).toFile(`public/assets/img/${name}.jpg`); }
 
 // vignette/edge for portraits
 function frame(c, col) { for (let x=0;x<c.w;x++){px(c,x,0,col);px(c,x,c.h-1,col);} for (let y=0;y<c.h;y++){px(c,0,y,col);px(c,c.w-1,y,col);} }

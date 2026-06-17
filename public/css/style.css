@@ -1,10 +1,10 @@
 :root {
-  --bg: #0e0b14;
-  --panel: #1b1626;
-  --panel-2: #2a2238;
-  --ink: #e9e4f2;
-  --muted: #9b91ad;
-  --gold: #e3c269;
+  --bg: #08070c;
+  --panel: #14101c;
+  --panel-2: #1f1830;
+  --ink: #d6d0e0;
+  --muted: #867c96;
+  --gold: #c9a23f;
   --red: #d6584f;
   --green: #5fbf7a;
   --blue: #5aa0e0;
@@ -290,3 +290,33 @@ body { background-color: var(--bg); background-image: repeating-linear-gradient(
 .enemy-area { flex-wrap: wrap; gap: 8px; align-items: flex-start; }
 .enemy-area .enemy { width: 140px; }
 .enemy-area .enemy-art { width: 88px; height: 88px; }
+
+/* ===================== Landscape + CRT 90s ===================== */
+/* Rotate-to-landscape gate */
+#rotate { display: none; }
+@media (orientation: portrait) {
+  #rotate {
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px;
+    position: fixed; inset: 0; z-index: 9999; background: #050409; color: var(--gold);
+    font-family: 'Press Start 2P', monospace; text-align: center; padding: 24px;
+  }
+  #rotate p { color: var(--ink); font-size: 0.7rem; line-height: 1.6; }
+  #rotate .rot-icon { font-size: 3rem; animation: rothint 1.8s ease-in-out infinite; }
+  /* hide game chrome behind the gate */
+  #mute { display: none; }
+}
+@keyframes rothint { 0%,100% { transform: rotate(-12deg); } 50% { transform: rotate(78deg); } }
+
+/* wider layout in landscape */
+@media (orientation: landscape) {
+  .screen { max-width: 960px; }
+  .enemy-area { min-height: 0; }
+  .hand .card { flex-basis: 104px; }
+}
+
+/* CRT scanlines + vignette overlay (90s feel) */
+#crt { position: fixed; inset: 0; pointer-events: none; z-index: 200;
+  background:
+    repeating-linear-gradient(0deg, rgba(0,0,0,0.18) 0 1px, transparent 1px 3px),
+    radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,0.55) 100%);
+  mix-blend-mode: multiply; }

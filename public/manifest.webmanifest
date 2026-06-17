@@ -4,7 +4,7 @@
   "description": "Roguelike card dungeon crawler.",
   "start_url": ".",
   "display": "standalone",
-  "orientation": "portrait",
+  "orientation": "landscape",
   "background_color": "#0e0b14",
   "theme_color": "#0e0b14",
   "icons": [

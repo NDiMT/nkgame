@@ -11,6 +11,7 @@
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+  <div id="rotate"><div class="rot-icon">📱↻</div><p>Rotate your device to landscape</p></div>
   <button id="mute" aria-label="Sound">🔊</button>
 
   <!-- TITLE -->
@@ -71,6 +72,7 @@
     <button id="btn-restart" class="primary">New adventure</button>
   </section>
 
+  <div id="crt"></div>
   <script type="module" src="js/app.js"></script>
   <script>
     if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});

@@ -18,6 +18,10 @@ function slotOptions(classId, slot) {
 const sample = (arr, n) => { const p = [...arr]; const o = []; while (o.length < n && p.length) o.push(p.splice(Math.floor(Math.random() * p.length), 1)[0]); return o; };
 const img = (key, cls) => `<img class="${cls}" src="assets/img/${key}.jpg" alt="" loading="lazy" onerror="this.style.display='none'">`;
 function show(name) { Object.values(screens).forEach((el) => el.classList.add('hidden')); screens[name].classList.remove('hidden'); }
+async function lockLandscape() { // best-effort (works in installed PWA / supported browsers)
+  try { if (document.documentElement.requestFullscreen) await document.documentElement.requestFullscreen(); } catch {}
+  try { if (screen.orientation && screen.orientation.lock) await screen.orientation.lock('landscape'); } catch {}
+}
 
 // ---- Persistent unlocks (localStorage) ------------------------------------
 function loadUnlocks() { try { return JSON.parse(localStorage.getItem('dc_unlocks')) || {}; } catch { return {}; } }
@@ -301,7 +305,7 @@ function victory() {
 // ---- Wiring ----------------------------------------------------------------
 function wire() {
   for (const n of ['title', 'class', 'loadout', 'map', 'combat', 'event', 'end']) screens[n] = $('#screen-' + n);
-  $('#btn-start').onclick = () => { music.start(); classSelect(); };
+  $('#btn-start').onclick = async () => { music.start(); await lockLandscape(); classSelect(); };
   $('#event-continue').onclick = afterRoom;
   $('#btn-restart').onclick = classSelect;
   $('#mute').onclick = () => { $('#mute').textContent = music.toggle() ? '🔊' : '🔇'; };
