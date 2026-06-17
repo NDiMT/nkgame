@@ -113,7 +113,7 @@ export class Game {
     return out;
   }
   applyUpgrade(id) {
-    if (id === 'turret') { this.turrets.push({ x: 0, dmg: 6, rate: 1, range: 260, t: 0, lvl: 1 }); this.layoutTurrets(); }
+    if (id === 'turret') { const m = this.turrets.find(t => t.main); this.turrets.push({ x: 0, dmg: m.dmg, rate: m.rate, range: m.range, t: 0, lvl: 1 }); this.layoutTurrets(); }
     else if (id === 'power') this.passive.dmg *= 1.25;
     else if (id === 'rapid') this.passive.rate *= 1.2;
     else if (id === 'range') this.passive.range *= 1.25;
@@ -151,6 +151,8 @@ export class Game {
     // turret range rings (subtle) + turrets on the wall
     ctx.strokeStyle = 'rgba(201,162,63,0.10)'; ctx.lineWidth = 1;
     for (const tr of this.turrets) { ctx.beginPath(); ctx.arc(tr.x, wy - 6, tr.range * this.passive.range, 0, TAU); ctx.stroke(); }
+    // brown wooden base under each extra turret (matches the gate)
+    for (const tr of this.turrets) { if (tr.main) continue; ctx.fillStyle = '#241a12'; ctx.fillRect(tr.x - 17, wy + 10, 34, this.wallH); ctx.fillStyle = '#3a2a1a'; ctx.fillRect(tr.x - 13, wy + 14, 26, this.wallH); }
     for (const tr of this.turrets) this.drawSprite('turret', tr.x, wy - 4, tr.main ? 1.25 : 1);
     // gate cannon barrel toward aim
     const main = this.turrets.find(t => t.main); if (main) { const tgt = this.aim || this.nearest(main.x, wy, 9999) || { x: main.x, y: wy - 60 }; const a = Math.atan2(tgt.y - (wy - 6), tgt.x - main.x); ctx.save(); ctx.translate(main.x, wy - 8); ctx.rotate(a); ctx.fillStyle = '#3a3a44'; ctx.fillRect(0, -4, 26, 8); ctx.fillStyle = '#1a1a22'; ctx.fillRect(22, -5, 5, 10); ctx.restore(); }
