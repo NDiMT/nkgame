@@ -1,1 +1,1 @@
-{ "name":"Ashen Vale","short_name":"AshenVale","start_url":".","display":"standalone","orientation":"any","background_color":"#0c0f15","theme_color":"#10141c","icons":[{"src":"assets/cover.jpg","sizes":"384x256","type":"image/jpeg"}] }
+{ "name":"Σταχτοχώρι","short_name":"Σταχτοχώρι","start_url":".","display":"standalone","orientation":"any","background_color":"#1a1620","theme_color":"#1a1620","icons":[{"src":"assets/cover.jpg","sizes":"384x256","type":"image/jpeg"}] }

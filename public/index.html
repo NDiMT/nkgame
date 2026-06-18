@@ -1,13 +1,13 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="el">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-  <meta name="theme-color" content="#10141c">
-  <title>Ashen Vale</title>
+  <meta name="theme-color" content="#1a1620">
+  <title>Σταχτοχώρι</title>
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;800&family=Press+Start+2P&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;800&family=EB+Garamond:ital@0;1&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
   <script type="importmap">
   { "imports": { "three": "./vendor/three.module.js" } }
@@ -18,37 +18,48 @@
 
   <!-- HUD -->
   <div id="hud" class="hidden">
-    <div class="bars">
-      <div class="bar hp"><i></i><div id="hp-fill"></div></div>
-      <div class="bar st"><i></i><div id="st-fill"></div></div>
-    </div>
-    <div id="objective">Foes <b id="foes">0</b></div>
+    <div id="objective">📜 <span id="obj-text"></span> <b id="obj-count"></b></div>
   </div>
 
   <!-- TOUCH CONTROLS -->
   <div id="touch" class="hidden">
     <div id="stick"><div id="stick-nub"></div></div>
+    <button id="btn-interact" class="prompt hidden"><span id="prompt-label"></span></button>
     <div id="buttons">
       <button id="btn-roll" class="action" aria-label="Dodge">⟳</button>
-      <button id="btn-attack" class="action big" aria-label="Attack">⚔</button>
     </div>
   </div>
 
   <button id="mute" aria-label="Sound">🔊</button>
 
-  <!-- TITLE -->
-  <section id="screen-title" class="overlay">
-    <h1>ASHEN<br>VALE</h1>
-    <p class="tag">A lone wanderer in a forgotten vale. Move with the left stick, swipe the right side to look around, and strike down what stirs in the mist. Rest at the golden tree to heal.</p>
-    <button id="btn-start" class="primary">Enter the Vale</button>
-    <p class="hint">Headphones recommended · tap to begin</p>
+  <!-- DIALOGUE (bottom panel) -->
+  <section id="dialogue" class="hidden">
+    <div class="dlg-box">
+      <div id="dlg-name"></div>
+      <p id="dlg-text"></p>
+      <div class="dlg-next">τάπ για συνέχεια ▸</div>
+    </div>
   </section>
 
-  <!-- DEATH -->
-  <section id="death" class="overlay hidden">
-    <h2>YOU DIED</h2>
-    <p id="death-stats" class="tag"></p>
-    <button id="btn-respawn" class="primary">Rise again</button>
+  <!-- NARRATION (fullscreen: intro / chapter end) -->
+  <section id="narration" class="overlay hidden">
+    <p id="narr-text" class="narr"></p>
+    <div id="narr-next" class="hint">τάπ για συνέχεια</div>
+  </section>
+
+  <!-- TITLE -->
+  <section id="screen-title" class="overlay">
+    <h1 id="title">ΣΤΑΧΤΟΧΩΡΙ</h1>
+    <p id="subtitle" class="tag"></p>
+    <button id="btn-start" class="primary">Ξεκίνα</button>
+    <p class="hint">Αριστερά κινείσαι · σύρε δεξιά για κάμερα · πλησίασε σημεία για εξερεύνηση</p>
+  </section>
+
+  <!-- CHAPTER END -->
+  <section id="chapter" class="overlay hidden">
+    <h2 id="ch-title"></h2>
+    <p id="ch-text" class="tag"></p>
+    <button id="btn-replay" class="primary">Από την αρχή</button>
   </section>
 
   <div id="toast"></div>
