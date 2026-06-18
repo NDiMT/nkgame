@@ -13,8 +13,8 @@ const OUT = path.join(ROOT, 'public', 'assets');
 
 async function loadEnv() { const p = ROOT + '/.env'; if (!existsSync(p)) return; for (const l of (await readFile(p,'utf8')).split('\n')) { const m=l.match(/^\s*([A-Z0-9_]+)\s*=\s*(.*)\s*$/); if (m&&!process.env[m[1]]) process.env[m[1]]=m[2]; } }
 
-const STYLE = '16-bit pixel art game sprite, bold thick solid black outline, clean readable silhouette, dark fantasy, vivid but moody colors, single centered subject, full body, flat lighting, NO shadow on ground, NO text';
-const GREEN = 'on a solid flat uniform pure green chroma-key background, color rgb(0,255,0), fully filling the frame';
+const STYLE = '16-bit pixel art game sprite, bold thick solid black outline, clean readable silhouette, dark fantasy, vivid but moody colors, rich shading and detail, single centered subject, full body, flat lighting, NO shadow on ground, NO text';
+const GREEN = 'isolated on a completely solid, flat, uniform bright magenta background color rgb(255,0,255) that fully fills the frame behind the subject';
 
 let ai; async function client(){ if(ai) return ai; const {GoogleGenAI}=await import('@google/genai'); ai=new GoogleGenAI({apiKey:process.env.GEMINI_API_KEY}); return ai; }
 
@@ -27,14 +27,18 @@ async function raw(prompt) {
   } catch(e){ if(a===3) throw e; await new Promise(r=>setTimeout(r,1500)); } }
 }
 
-// keyed transparent PNG sprite
+// keyed transparent PNG sprite — flood-fill the background from the borders
 async function sprite(name, desc, w, h) {
   process.stdout.write(name+' ... ');
   try {
-    const buf = await raw(`${desc}. ${STYLE}. ${GREEN}.`);
-    const { data, info } = await sharp(buf).resize(w, h, { fit:'contain', background:{r:0,g:255,b:0} }).ensureAlpha().raw().toBuffer({ resolveWithObject:true });
-    for (let i=0;i<data.length;i+=4){ const r=data[i],g=data[i+1],b=data[i+2]; if (g>104 && r<118 && b<118 && g - Math.max(r,b) > 24) data[i+3]=0; }
-    await sharp(data, { raw:{width:info.width,height:info.height,channels:4} }).png().toFile(path.join(OUT,`${name}.png`));
+    const { data, info } = await sharp(await raw(`${desc}. ${STYLE}. ${GREEN}.`)).resize(w, h, { fit:'cover' }).ensureAlpha().raw().toBuffer({ resolveWithObject:true });
+    const W = info.width, H = info.height; const idx = (x,y)=>(y*W+x)*4;
+    const bg = [data[0], data[1], data[2]]; const tol = 100;
+    const near = (i)=> Math.abs(data[i]-bg[0]) + Math.abs(data[i+1]-bg[1]) + Math.abs(data[i+2]-bg[2]) < tol;
+    const st = []; const push = (x,y)=>{ if (x<0||y<0||x>=W||y>=H) return; const i=idx(x,y); if (data[i+3]===0) return; if (near(i)) { data[i+3]=0; st.push(x,y); } };
+    for (let x=0;x<W;x++){ push(x,0); push(x,H-1); } for (let y=0;y<H;y++){ push(0,y); push(W-1,y); }
+    while (st.length){ const y=st.pop(), x=st.pop(); push(x+1,y); push(x-1,y); push(x,y+1); push(x,y-1); }
+    await sharp(data, { raw:{width:W,height:H,channels:4} }).png().toFile(path.join(OUT,`${name}.png`));
     console.log('ok'); return true;
   } catch(e){ console.log('FAIL '+e.message); return false; }
 }
@@ -58,7 +62,7 @@ async function main() {
   await sprite('boss', 'a giant horned demon warlord boss wreathed in dark fire, menacing', 96, 96);
   await sprite('gem', 'a single glowing cyan-green experience crystal gem, faceted', 16, 16);
   await sprite('bolt', 'a glowing golden magic energy bolt projectile, small orb with trail', 22, 22);
-  await sprite('turret', 'a small stone ballista cannon turret', 40, 40);
+  await sprite('turret', 'a round stone turret base mount platform with a metal pivot ring on top, top-down view, NO cannon barrel, just the circular base', 40, 40);
   console.log('done');
 }
 main().catch(e=>{ console.error(e.message); process.exit(1); });
