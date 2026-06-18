@@ -62,10 +62,11 @@ export class Input {
     addEventListener('touchmove', onMove, { passive: false });
     addEventListener('touchend', onUp); addEventListener('touchcancel', onUp);
 
-    // ---- buttons ----
+    // ---- buttons (some may be absent depending on the chapter) ----
     const btnA = document.getElementById('btn-attack');
     const btnR = document.getElementById('btn-roll');
-    const tap = (el, fn) => { el.addEventListener('touchstart', (e) => { e.preventDefault(); fn(); }, { passive: false });
+    const tap = (el, fn) => { if (!el) return;
+                              el.addEventListener('touchstart', (e) => { e.preventDefault(); fn(); }, { passive: false });
                               el.addEventListener('mousedown', (e) => { e.preventDefault(); fn(); }); };
     tap(btnA, () => { this._attack = true; });
     tap(btnR, () => { this._roll = true; });
