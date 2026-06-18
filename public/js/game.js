@@ -14,6 +14,19 @@ const ENEMIES = {
   boss:   { hp: 1800, spd: 20, dmg: 50, r: 40, xp: 80, gold: 60, spr: 'boss', boss: true },
 };
 
+// Upgrade categories: 4 incremental ranks, then rank 5 = ULTIMATE. Up to 4
+// categories may be invested in per run.
+const CATS = {
+  damage: { name: 'Damage', icon: 'bolt', desc: '+30% damage (all turrets).', ult: 'Explosive Rounds', ultDesc: 'Shots explode on hit — splash damage to nearby foes.' },
+  rate:   { name: 'Fire Rate', icon: 'bolt', desc: '+30% fire rate (all turrets).', ult: 'Sniper Protocol', ultDesc: 'Every few seconds a sniper shot one-shots a normal foe & blasts bosses.' },
+  twin:   { name: 'Twin Shot', icon: 'turret', desc: '+1 projectile (all turrets).', ult: 'Bullet Storm', ultDesc: '+2 projectiles in a wide spread.' },
+  range:  { name: 'Range', icon: 'turret', desc: '+25% range (all turrets).', ult: 'Overwatch', ultDesc: 'Turrets cover the whole screen.' },
+  pierce: { name: 'Piercing', icon: 'bolt', desc: 'Shots pierce +1 enemy.', ult: 'Railgun', ultDesc: 'Shots pierce everything and hit harder.' },
+  tower:  { name: 'Extra Tower', icon: 'turret', desc: 'Mount another turret.', ult: 'Fortress', ultDesc: '+2 turrets and +30% damage to all.' },
+  wall:   { name: 'Fortify Wall', icon: 'castle', desc: '+120 max wall HP & repair.', ult: 'Aegis', ultDesc: 'The wall regenerates over time.' },
+};
+const CAT_CAP = 4;
+
 export class Game {
   constructor(canvas, assets, cb) { this.cv = canvas; this.ctx = canvas.getContext('2d'); this.A = assets; this.cb = cb; this.aim = null; this.reset(); }
   dpr() { return Math.min(window.devicePixelRatio || 1, 2); }
@@ -28,6 +41,8 @@ export class Game {
     this.enemies = []; this.shots = []; this.fx = [];
     this.spawnT = 0; this.bossT = 80;
     this.passive = { dmg: 1, rate: 1, range: 1, pierce: 0, count: 0 };
+    this.upg = { damage: 0, rate: 0, twin: 0, range: 0, pierce: 0, tower: 0, wall: 0 };
+    this.ult = {}; this.sniperT = 6;
     this.over = false; this.paused = false;
   }
   resize() { const d = this.dpr(); this.cv.width = innerWidth * d; this.cv.height = innerHeight * d; this.cv.style.width = innerWidth + 'px'; this.cv.style.height = innerHeight + 'px'; this.ctx.setTransform(d, 0, 0, d, 0, 0); this.ctx.imageSmoothingEnabled = false; this.W = innerWidth; this.H = innerHeight; this.wallY = this.H - this.wallH; this.gateX = this.W / 2; if (this.turrets) this.layoutTurrets(); }
@@ -55,6 +70,8 @@ export class Game {
   update(dt) {
     if (this.over || this.paused) return;
     this.t += dt;
+    if (this.ult.aegis) this.wall.hp = Math.min(this.wall.maxHp, this.wall.hp + 30 * dt);
+    if (this.ult.sniper) { this.sniperT -= dt; if (this.sniperT <= 0) { this.sniperShot(); this.sniperT = 4; } }
     // spawns
     this.spawnT -= dt; if (this.spawnT <= 0) { const n = 1 + Math.floor(this.t / 30); for (let i = 0; i < n; i++) this.spawn(); this.spawnT = Math.max(0.4, 1.7 - this.t / 90); }
     this.bossT -= dt; if (this.bossT <= 0) { this.addEnemy('boss', this.W / 2, -50); this.bossT = 95; }
@@ -83,7 +100,7 @@ export class Game {
     // shots
     for (const s of this.shots) { if (s.dead) continue; s.x += s.vx * dt; s.y += s.vy * dt;
       if (s.y < -30 || s.x < -30 || s.x > this.W + 30 || s.y > this.H + 30) { s.dead = true; continue; }
-      for (const e of this.enemies) { if (e.dead) continue; if (d2(s.x, s.y, e.x, e.y) < (e.r + 6) * (e.r + 6)) { this.hurt(e, s.dmg); if (--s.pierce < 0) { s.dead = true; break; } } } }
+      for (const e of this.enemies) { if (e.dead) continue; if (d2(s.x, s.y, e.x, e.y) < (e.r + 6) * (e.r + 6)) { this.hurt(e, s.dmg); if (this.ult.explosive) this.explode(e.x, e.y, s.dmg, e); if (--s.pierce < 0) { s.dead = true; break; } } } }
 
     for (const f of this.fx) f.life -= dt;
     this.enemies = this.enemies.filter(e => !e.dead); this.shots = this.shots.filter(s => !s.dead); this.fx = this.fx.filter(f => f.life > 0);
@@ -92,36 +109,51 @@ export class Game {
     this.cb.onHud(this.hud());
   }
 
+  explode(x, y, dmg, except) { const R = 60; for (const e of this.enemies) { if (e.dead || e === except) continue; if (d2(x, y, e.x, e.y) < R * R) this.hurt(e, dmg * 0.55); } this.fx.push({ x, y, boom: R, life: 0.2 }); }
+  sniperShot() {
+    let target = this.enemies.find(e => !e.dead && e.boss);
+    if (!target) { let my = -1; for (const e of this.enemies) { if (!e.dead && e.y > my) { my = e.y; target = e; } } }
+    if (!target) return;
+    this.hurt(target, target.boss ? 240 * this.passive.dmg : 99999);
+    this.fx.push({ beam: { x1: this.gateX, y1: this.wallY - 8, x2: target.x, y2: target.y }, life: 0.22 });
+  }
+
   shoot(x, y, target, dmg, spread = 0) { let a = Math.atan2(target.y - y, target.x - x) + spread; const sp = 420; this.shots.push({ x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, dmg, pierce: this.passive.pierce, dead: false }); }
 
   gainXp(n) { this.xp += n; if (!this.paused) this.checkLevel(); }
   checkLevel() { if (this.xp >= this.xpNext) { this.xp -= this.xpNext; this.level++; this.xpNext = Math.round(this.xpNext * 1.3 + 4); this.paused = true; this.cb.onLevelUp(this.choices()); } }
 
   choices() {
-    const pool = [
-      { id: 'turret', name: 'Add Turret', icon: 'turret', desc: `Mount another auto-turret on the wall.` },
-      { id: 'power', name: 'Heavy Rounds', icon: 'bolt', desc: '+50% damage (all turrets).' },
-      { id: 'rapid', name: 'Rapid Fire', icon: 'bolt', desc: '+50% fire rate (all turrets).' },
-      { id: 'range', name: 'Long Barrels', icon: 'turret', desc: '+25% range.' },
-      { id: 'pierce', name: 'AP Rounds', icon: 'bolt', desc: 'Shots pierce +1 enemy.' },
-      { id: 'multishot', name: 'Twin Cannon', icon: 'turret', desc: 'Gate cannon fires +1 shot.' },
-      { id: 'reinforce', name: 'Reinforce Wall', icon: 'castle', desc: '+150 max wall HP & repair.' },
-      { id: 'repair', name: 'Repair', icon: 'castle', desc: 'Restore 200 wall HP.' },
-    ];
+    const keys = Object.keys(CATS);
+    const selected = keys.filter(k => this.upg[k] > 0).length;
+    const elig = keys.filter(k => this.upg[k] < 5 && (this.upg[k] > 0 || selected < CAT_CAP));
+    const opts = elig.map(k => { const next = this.upg[k] + 1, c = CATS[k], ult = next === 5;
+      return { id: k, name: ult ? `★ ${c.ult}` : `${c.name} ${next}/5`, icon: c.icon, desc: ult ? c.ultDesc : c.desc, ult }; });
+    // always-available fillers (don't count toward the cap)
+    opts.push({ id: 'repair', name: 'Repair', icon: 'castle', desc: 'Restore 220 wall HP.' });
+    opts.push({ id: 'bounty', name: 'Bounty', icon: 'gem', desc: '+60 gold.' });
     const out = []; const used = new Set();
-    while (out.length < 3 && pool.length) { const c = pool.splice(Math.floor(Math.random() * pool.length), 1)[0]; if (used.has(c.id)) continue; used.add(c.id); out.push(c); }
+    while (out.length < 3 && opts.length) { const c = opts.splice(Math.floor(Math.random() * opts.length), 1)[0]; if (used.has(c.id)) continue; used.add(c.id); out.push(c); }
     return out;
   }
+  addTurret() { const m = this.turrets.find(t => t.main); this.turrets.push({ x: 0, dmg: m.dmg, rate: m.rate, range: m.range, t: 0, lvl: 1 }); this.layoutTurrets(); }
   applyUpgrade(id) {
-    if (id === 'turret') { const m = this.turrets.find(t => t.main); this.turrets.push({ x: 0, dmg: m.dmg, rate: m.rate, range: m.range, t: 0, lvl: 1 }); this.layoutTurrets(); }
-    else if (id === 'power') this.passive.dmg *= 1.5;
-    else if (id === 'rapid') this.passive.rate *= 1.5;
-    else if (id === 'range') this.passive.range *= 1.25;
-    else if (id === 'pierce') this.passive.pierce += 1;
-    else if (id === 'multishot') this.passive.count += 1;
-    else if (id === 'reinforce') { this.wall.maxHp += 150; this.wall.hp = Math.min(this.wall.maxHp, this.wall.hp + 150); }
-    else if (id === 'repair') this.wall.hp = Math.min(this.wall.maxHp, this.wall.hp + 200);
+    if (id === 'repair') this.wall.hp = Math.min(this.wall.maxHp, this.wall.hp + 220);
+    else if (id === 'bounty') this.gold += 60;
+    else { const lvl = ++this.upg[id]; this.applyCat(id, lvl); }
     this.paused = false; this.checkLevel();
+  }
+  applyCat(id, lvl) {
+    const ult = lvl >= 5, P = this.passive;
+    switch (id) {
+      case 'damage': ult ? (this.ult.explosive = true) : (P.dmg *= 1.3); break;
+      case 'rate': ult ? (this.ult.sniper = true, this.sniperT = 4) : (P.rate *= 1.3); break;
+      case 'twin': ult ? (P.count += 2, this.ult.storm = true) : (P.count += 1); break;
+      case 'range': ult ? (P.range = 99, this.ult.overwatch = true) : (P.range *= 1.25); break;
+      case 'pierce': ult ? (P.pierce = 999, P.dmg *= 1.2, this.ult.railgun = true) : (P.pierce += 1); break;
+      case 'tower': if (ult) { this.addTurret(); this.addTurret(); P.dmg *= 1.3; } else this.addTurret(); break;
+      case 'wall': this.wall.maxHp += 120; this.wall.hp = Math.min(this.wall.maxHp, this.wall.hp + 120); if (ult) this.ult.aegis = true; break;
+    }
   }
 
   stats() { return { time: this.t, level: this.level, kills: this.kills, gold: this.gold }; }
@@ -167,8 +199,12 @@ export class Game {
     // aim reticle
     if (this.aim) { ctx.strokeStyle = 'rgba(201,162,63,0.8)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(this.aim.x, this.aim.y, 12, 0, TAU); ctx.moveTo(this.aim.x - 18, this.aim.y); ctx.lineTo(this.aim.x + 18, this.aim.y); ctx.moveTo(this.aim.x, this.aim.y - 18); ctx.lineTo(this.aim.x, this.aim.y + 18); ctx.stroke(); }
 
-    // floating dmg
-    for (const f of this.fx) { ctx.fillStyle = f.bad ? '#ff7a6a' : '#fff'; ctx.font = '12px monospace'; ctx.globalAlpha = Math.max(0, f.life * 2); ctx.fillText(f.txt, f.x - 6, f.y - (0.5 - f.life) * 20); ctx.globalAlpha = 1; }
+    // effects: explosions, sniper beam, floating damage
+    for (const f of this.fx) {
+      if (f.beam) { ctx.strokeStyle = `rgba(150,230,255,${Math.max(0, f.life * 4)})`; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(f.beam.x1, f.beam.y1); ctx.lineTo(f.beam.x2, f.beam.y2); ctx.stroke(); }
+      else if (f.boom) { const a = Math.max(0, f.life * 4); ctx.fillStyle = `rgba(255,140,40,${a * 0.4})`; ctx.strokeStyle = `rgba(255,190,80,${a})`; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(f.x, f.y, f.boom * (1 - f.life), 0, TAU); ctx.fill(); ctx.stroke(); }
+      else if (f.txt !== undefined) { ctx.fillStyle = f.bad ? '#ff7a6a' : '#fff'; ctx.font = '12px monospace'; ctx.globalAlpha = Math.max(0, f.life * 2); ctx.fillText(f.txt, f.x - 6, f.y - (0.5 - f.life) * 20); ctx.globalAlpha = 1; }
+    }
   }
   bar(x, y, w, h, frac, col) { const ctx = this.ctx; ctx.fillStyle = '#000'; ctx.fillRect(x - 1, y - 1, w + 2, h + 2); ctx.fillStyle = col; ctx.fillRect(x, y, w * Math.max(0, frac), h); }
 }
