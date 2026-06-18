@@ -1,1 +1,1 @@
-{ "name":"Castle Survivors","short_name":"Castle","start_url":".","display":"standalone","orientation":"portrait","background_color":"#0a0710","theme_color":"#0a0710","icons":[{"src":"assets/cover.jpg","sizes":"384x256","type":"image/jpeg"}] }
+{ "name":"Ashen Vale","short_name":"AshenVale","start_url":".","display":"standalone","orientation":"any","background_color":"#0c0f15","theme_color":"#10141c","icons":[{"src":"assets/cover.jpg","sizes":"384x256","type":"image/jpeg"}] }

@@ -2,11 +2,10 @@
   "name": "nkgame",
   "version": "0.1.0",
   "private": true,
-  "description": "Καρτορόγκα — a single-player roguelike card-combat dungeon crawler (mobile PWA, fully static).",
+  "description": "Ashen Vale — a 3rd-person low-poly action-RPG (Three.js, mobile PWA, fully static).",
   "type": "module",
   "scripts": {
-    "start": "node tools/serve.js",
-    "gen-art": "node tools/generate-art.js"
+    "start": "node tools/serve.js"
   },
   "devDependencies": {
     "@google/genai": "^1.0.0",

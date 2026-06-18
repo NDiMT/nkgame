@@ -1,34 +1,37 @@
-# 🏰 Castle Survivors
+# ⚔️ Ashen Vale
 
-A single-player **bullet-heaven roguelite** (survivor.io / Vampire Survivors style)
-where you **defend a castle** from endless hordes. Move to fight; your weapons
-auto-attack; kill enemies for XP; level up to pick upgrades for your hero, your
-weapons, and castle defenses. The run ends when the castle (or you) falls.
+A small **3rd-person action-RPG** (Zelda / Elden Ring vibe) built in **Three.js**.
+You wander a misty low-poly vale, roll and swing a sword against waves of foes,
+and rest at the golden **grace tree** to heal. One playable area to start.
 
-Fully static PWA (HTML5 Canvas), mobile landscape, deploys on GitHub Pages.
+Fully static PWA (WebGL via vendored Three.js), mobile-first, deploys on GitHub Pages.
 
 ## Play
-- **Live:** https://ndimt.github.io/nkgame/  (rotate to landscape)
-- **Local:** `npm install && npm start` → http://localhost:8080
+- **Live:** https://ndimt.github.io/nkgame/
+- **Local:** `npm start` → http://localhost:8080
 
 ## Controls
-- **Drag anywhere** to move (virtual joystick) · or **WASD/arrows** on desktop.
-- Weapons fire automatically. Collect XP gems; choose an upgrade each level.
+- **Left stick** — move · **swipe right side** — look around the character.
+- **⚔ button** — sword attack · **⟳ button** — dodge roll (i-frames).
+- Desktop: **WASD/arrows** move, **mouse drag** looks, **J/Space** attack, **Shift** roll.
+- Attacks and rolls cost **stamina** (green bar); it regenerates when idle.
 
 ## Structure
 ```
 public/
-  index.html        canvas + HUD + title/levelup/gameover overlays
-  css/style.css     dark pixel UI, landscape gate, CRT
-  js/game.js        engine: loop, hordes, weapons, XP/leveling, render
-  js/main.js        assets, input (joystick/keys), screens, loop
-  js/audio.js       procedural soundtrack
-  assets/           sprites (transparent PNG) + ground/cover
-tools/code-sprites.js  free code-drawn pixel sprites (current art)
-tools/gen-sprites.js   Gemini sprite generator (chroma-keyed PNG) — overrides art
+  index.html        canvas + HUD + touch controls + title/death overlays
+  css/style.css      atmospheric UI, virtual stick, action buttons
+  js/game.js         engine: 3rd-person camera, player, combat, enemy AI, waves
+  js/world.js        procedural low-poly terrain, props, lighting, grace tree
+  js/mob.js          low-poly humanoid builder (player + enemies)
+  js/input.js        touch stick + look + buttons, keyboard/mouse fallback
+  js/main.js         boot, render loop, HUD, screens
+  js/audio.js        procedural soundtrack
+  vendor/three.module.js   pinned Three.js r160 (same-origin, offline-cacheable)
 ```
 
-## Art
-Sprites are currently **code-drawn** (free, offline). To upgrade to richer
-**Gemini** art (same filenames, auto-override), restrict your key then:
-`GEMINI_API_KEY=... node tools/gen-sprites.js`
+## Notes
+- Three.js is **vendored locally** (not a CDN) so the PWA works offline and
+  isn't subject to third-party availability.
+- Art is **procedural geometry** — no external 3D assets needed. Gemini can
+  still generate textures/skyboxes/UI later if we want extra polish.

@@ -21,4 +21,4 @@ http.createServer(async (req, res) => {
     res.writeHead(200, { 'Content-Type': MIME[path.extname(file)] || 'application/octet-stream' });
     res.end(data);
   } catch { res.writeHead(500); res.end('Error'); }
-}).listen(PORT, () => console.log(`Castle Survivors dev server → http://localhost:${PORT}`));
+}).listen(PORT, () => console.log(`Ashen Vale dev server → http://localhost:${PORT}`));
